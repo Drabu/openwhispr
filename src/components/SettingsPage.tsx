@@ -87,6 +87,7 @@ import { useHotkeyModeInfo } from "../hooks/useHotkeyModeInfo";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { validateHotkeyForSlot } from "../utils/hotkeyValidation";
 import { isHoldCapableHotkey } from "../helpers/holdCapableHotkey";
+import { PRESS_ENTER_DELAY_CHOICES_MS } from "../helpers/submitGrace";
 
 // Spoken-pause lengths people actually use; the store clamps anything else.
 const AUTO_STOP_DELAY_CHOICES_MS = [2000, 3000, 5000, 8000, 12000] as const;
@@ -1248,6 +1249,10 @@ export default function SettingsPage({
     keepTranscriptionInClipboard,
     pressEnterAfterPaste,
     setPressEnterAfterPaste,
+    pressEnterDelayMs,
+    setPressEnterDelayMs,
+    pressEnterDelayMode,
+    setPressEnterDelayMode,
     setKeepTranscriptionInClipboard,
     floatingIconAutoHide,
     setFloatingIconAutoHide,
@@ -3444,6 +3449,45 @@ export default function SettingsPage({
                       onChange={setPressEnterAfterPaste}
                       disabled={!autoPasteEnabled}
                     />
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.clipboard.pressEnterDelay")}
+                    description={t("settingsPage.general.clipboard.pressEnterDelayDescription")}
+                  >
+                    <Select
+                      value={
+                        pressEnterDelayMode === "length" ? "length" : String(pressEnterDelayMs)
+                      }
+                      onValueChange={(value) => {
+                        if (value === "length") {
+                          setPressEnterDelayMode("length");
+                          return;
+                        }
+                        setPressEnterDelayMode("fixed");
+                        setPressEnterDelayMs(Number(value));
+                      }}
+                      disabled={!autoPasteEnabled || !pressEnterAfterPaste}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="length">
+                          {t("settingsPage.general.clipboard.pressEnterByLength")}
+                        </SelectItem>
+                        {PRESS_ENTER_DELAY_CHOICES_MS.map((ms) => (
+                          <SelectItem key={ms} value={String(ms)}>
+                            {ms === 0
+                              ? t("settingsPage.general.clipboard.pressEnterImmediately")
+                              : t("settingsPage.general.clipboard.pressEnterAfterSeconds", {
+                                  count: ms / 1000,
+                                })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </SettingsRow>
                 </SettingsPanelRow>
                 <SettingsPanelRow>

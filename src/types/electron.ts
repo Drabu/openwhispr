@@ -1692,6 +1692,8 @@ declare global {
           allowClipboardFallback?: boolean;
           /** Paste exactly this text: no smart spacing, no AutoLearn. */
           raw?: boolean;
+          /** A Return is coming via pressEnter(): records the target, skips AutoLearn. */
+          pressEnter?: boolean;
         }
       ) => Promise<
         | {
@@ -1707,6 +1709,11 @@ declare global {
             clipboardCopied: true;
           }
       >;
+      /** Submits the last pasted transcript, unless focus has moved off its target. */
+      pressEnter?: () => Promise<{
+        success: boolean;
+        reason?: "no-paste-target" | "focus-moved";
+      }>;
       captureSelectedText?: () => Promise<
         | {
             status: "selected";

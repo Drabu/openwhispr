@@ -2148,7 +2148,12 @@
         "autoPaste": "自動貼り付け",
         "autoPasteDescription": "ディクテーション完了後、文字起こしテキストをアクティブなアプリに自動的に貼り付けます",
         "pressEnter": "貼り付け後に Enter を押す",
-        "pressEnterDescription": "テキストが貼り付けられたら Return を送信し、チャット欄や検索欄で送信します。これが有効な間は入力欄が残らないため、修正からの学習は行われません。",
+        "pressEnterDescription": "テキストが貼り付けられたら Return を送信し、チャット欄や検索欄で送信します。送信された口述では修正からの学習は行われません。",
+        "pressEnterDelay": "送信前に待つ",
+        "pressEnterDelayDescription": "テキストを読んで Return を止めるための時間です。長さに応じて、一語なら数秒、段落なら最大十二秒になります。ピルをクリックするか Esc キーで取り消せます。次の口述を始めても取り消されます。",
+        "pressEnterByLength": "テキストの長さに合わせる",
+        "pressEnterImmediately": "すぐに送信",
+        "pressEnterAfterSeconds": "{{count}} 秒後",
         "keepInClipboard": "文字起こしをクリップボードに保持",
         "keepInClipboardDescription": "必要に応じて手動で貼り付けできるよう、音声入力テキストをクリップボードに保持します"
       },
@@ -4594,7 +4599,8 @@
       "hotkeyToSpeak": "{{hotkey}} で話す",
       "recording": "録音中...",
       "processing": "処理中...",
-      "waitingForMicrophone": "マイクを待っています…"
+      "waitingForMicrophone": "マイクを待っています…",
+      "cancelSubmit": "送信中 — クリックで取り消し"
     },
     "buttons": {
       "cancelRecording": "録音をキャンセル",

@@ -2148,7 +2148,12 @@
         "autoPaste": "自動貼上",
         "autoPasteDescription": "聽寫結束後自動將轉錄文字貼上到目前使用中的應用程式",
         "pressEnter": "貼上後按下 Enter",
-        "pressEnterDescription": "文字落入後送出 Enter，從而在聊天框或搜尋框中送出。啟用期間不會從修改中學習，因為輸入框已經不在了。",
+        "pressEnterDescription": "文字落入後送出 Enter，從而在聊天框或搜尋框中送出。對已送出的聽寫不會從修改中學習。",
+        "pressEnterDelay": "送出前等待",
+        "pressEnterDelayDescription": "留出時間閱讀文字並阻止 Enter。依長度調整：一個詞幾秒，一段話最多十二秒。點擊膠囊或按 Esc 即可取消。開始下一次聽寫也會取消。",
+        "pressEnterByLength": "依文字長度",
+        "pressEnterImmediately": "立即送出",
+        "pressEnterAfterSeconds": "{{count}} 秒後",
         "keepInClipboard": "將轉錄內容保留在剪貼簿",
         "keepInClipboardDescription": "將語音輸入的文字保留在剪貼簿中，以便在需要時手動貼上"
       },
@@ -4594,7 +4599,8 @@
       "hotkeyToSpeak": "{{hotkey}} 說話",
       "recording": "錄音中...",
       "processing": "處理中...",
-      "waitingForMicrophone": "等待麥克風…"
+      "waitingForMicrophone": "等待麥克風…",
+      "cancelSubmit": "正在送出 — 點擊取消"
     },
     "buttons": {
       "cancelRecording": "取消錄音",

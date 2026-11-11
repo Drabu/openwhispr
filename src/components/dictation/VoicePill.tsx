@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import { forwardRef, useEffect, useRef, type HTMLAttributes } from "react";
 import { ChevronUp } from "../icons";
 import { cn } from "../lib/utils";
 import { PillWaveform } from "./PillWaveform";
@@ -19,6 +19,7 @@ export type VoicePillState =
   | "recording"
   | "processing"
   | "thinking"
+  | "submitting"
   | "unavailable";
 
 interface VoicePillProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
@@ -38,6 +39,10 @@ interface VoicePillProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"
   horizontalDirection?: "left" | "right";
   /** Ambient mic monitor is running: the pill dims at rest and lifts on speech. */
   ambientActive?: boolean;
+  /** When the pending Return fires, as an epoch ms; drives the countdown ring. */
+  submitDeadline?: number | null;
+  /** The grace period the ring is a fraction of. */
+  submitDelayMs?: number;
 }
 
 // Sized from WAVEFORM_BAR_COUNT so a bar-count change can never silently
@@ -64,6 +69,7 @@ const STATE_APPEARANCE: Record<VoicePillState, string> = {
   recording: "border-border-hover bg-surface-1 text-foreground",
   processing: "border-border/60 bg-surface-1 text-foreground/70",
   thinking: "border-border/60 bg-surface-1 text-foreground",
+  submitting: "border-border-hover bg-surface-2 text-foreground",
   unavailable: "border-border/60 bg-surface-1 text-muted-foreground",
 };
 
@@ -93,6 +99,7 @@ const CAT_STATE: Record<VoicePillState, CatIdentityState> = {
   recording: "recording",
   processing: "processing",
   thinking: "processing",
+  submitting: "submitting",
   unavailable: "muted",
 };
 
@@ -118,6 +125,8 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
     isDragging = false,
     horizontalDirection = "right",
     ambientActive = false,
+    submitDeadline = null,
+    submitDelayMs = 0,
     className,
     style,
     ...props
@@ -128,6 +137,33 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
   const isProcessing = state === "processing";
   const isThinking = state === "thinking";
   const isUnavailable = state === "unavailable";
+  const countdownRef = useRef<HTMLSpanElement>(null);
+  const submitActive = state === "submitting" && !!submitDeadline && submitDelayMs > 0;
+
+  // Driven from the deadline rather than a CSS animation of fixed length: the
+  // grace period is a setting, and a dropped frame must show the time actually
+  // left instead of lagging the keystroke it is warning about.
+  useEffect(() => {
+    const ring = countdownRef.current;
+    if (!ring) return;
+    if (!submitActive) {
+      ring.style.setProperty("--submit-remaining", "0");
+      return;
+    }
+
+    let frame = 0;
+    const paint = () => {
+      const remaining = (submitDeadline - Date.now()) / submitDelayMs;
+      ring.style.setProperty("--submit-remaining", Math.min(1, Math.max(0, remaining)).toFixed(4));
+      frame = requestAnimationFrame(paint);
+    };
+
+    frame = requestAnimationFrame(paint);
+    return () => {
+      cancelAnimationFrame(frame);
+      ring.style.setProperty("--submit-remaining", "0");
+    };
+  }, [submitActive, submitDeadline, submitDelayMs]);
   // One Signal glow (comet orbit over a breathing halo) serves both
   // identities; only the palette differs. It lights for the real thinking
   // state alone — glowing during the entrance or while listening would read
@@ -294,6 +330,12 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
       >
         <span className="processing-signal-ring" />
       </span>
+      <span
+        ref={countdownRef}
+        aria-hidden="true"
+        className="submit-countdown-ring"
+        data-active={submitActive ? "true" : undefined}
+      />
       {pill}
     </span>
   );

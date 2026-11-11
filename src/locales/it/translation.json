@@ -2148,7 +2148,12 @@
         "autoPaste": "Incollaggio automatico",
         "autoPasteDescription": "Incolla automaticamente il testo trascritto nell'app attiva al termine della dettatura",
         "pressEnter": "Premere Invio dopo aver incollato",
-        "pressEnterDescription": "Invia Invio appena il testo è stato incollato, inviandolo in una chat o in un campo di ricerca. L'apprendimento delle correzioni viene saltato finché questa opzione è attiva, perché il campo non c'è più.",
+        "pressEnterDescription": "Invia Invio appena il testo è stato incollato, inviandolo in una chat o in un campo di ricerca. Per le dettature inviate così l'apprendimento delle correzioni viene saltato.",
+        "pressEnterDelay": "Attendere prima di inviare",
+        "pressEnterDelayDescription": "Un margine per leggere il testo e fermare Invio. Commisurato alla lunghezza: un paio di secondi per una parola, fino a dodici per un paragrafo. Fai clic sulla pillola o premi Esc per annullare. Anche avviare un'altra dettatura lo annulla.",
+        "pressEnterByLength": "In base alla lunghezza del testo",
+        "pressEnterImmediately": "Invia subito",
+        "pressEnterAfterSeconds": "Dopo {{count}} secondi",
         "keepInClipboard": "Mantieni la trascrizione negli appunti",
         "keepInClipboardDescription": "Mantieni il testo dettato negli appunti per poterlo incollare manualmente se necessario"
       },
@@ -4615,7 +4620,8 @@
       "hotkeyToSpeak": "{{hotkey}} per parlare",
       "recording": "Registrazione...",
       "processing": "Elaborazione...",
-      "waitingForMicrophone": "In attesa del microfono…"
+      "waitingForMicrophone": "In attesa del microfono…",
+      "cancelSubmit": "Invio in corso — fai clic per annullare"
     },
     "buttons": {
       "cancelRecording": "Annulla registrazione",

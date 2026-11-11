@@ -196,6 +196,8 @@ export default function App() {
     getAudioLevel,
     isHearingAmbient,
     isMissed,
+    pendingSubmit,
+    cancelPendingSubmit,
     ambientMonitorActive,
     ambientMuted,
   } = recording;
@@ -394,6 +396,9 @@ export default function App() {
       return "unavailable";
     if (isRecording) return "recording";
     if (isVisuallyProcessing) return "processing";
+    // Above hover: the countdown is the only state the pill is asking you to
+    // act on, so a pointer resting on it must not hide what is about to happen.
+    if (pendingSubmit) return "submitting";
     if (isHovered && !isRecording && !isVisuallyProcessing) return "hover";
     // Outranks the ambient states so the shake is not swallowed by the next
     // thing the mic hears.
@@ -409,6 +414,8 @@ export default function App() {
 
   const getMicTooltip = () => {
     switch (micState) {
+      case "submitting":
+        return t("app.mic.cancelSubmit");
       case "recording":
         return t("app.mic.recording");
       case "unavailable":
@@ -548,6 +555,8 @@ export default function App() {
               isDragging={isDragging}
               horizontalDirection={voiceHorizontalDirection}
               ambientActive={ambientMonitorActive}
+              submitDeadline={pendingSubmit?.deadline ?? null}
+              submitDelayMs={pendingSubmit?.delayMs ?? 0}
               role={pillIsInteractive ? "button" : "status"}
               tabIndex={pillIsInteractive ? 0 : undefined}
               aria-label={
@@ -584,12 +593,22 @@ export default function App() {
                 setDragStartPos(null);
               }}
               onClick={(e) => {
-                activateVoicePill();
                 e.preventDefault();
+                // The countdown owns the click while it runs: stopping the
+                // Return is the one thing that cannot wait for a second gesture.
+                if (pendingSubmit) {
+                  cancelPendingSubmit();
+                  return;
+                }
+                activateVoicePill();
               }}
               onKeyDown={(event) => {
                 if (event.repeat || !isVoicePillActivationKey(event.key)) return;
                 event.preventDefault();
+                if (pendingSubmit) {
+                  cancelPendingSubmit();
+                  return;
+                }
                 activateVoicePill();
               }}
               onContextMenu={(e) => {

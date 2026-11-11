@@ -2200,7 +2200,12 @@
         "autoPaste": "Pegado automático",
         "autoPasteDescription": "Pegar automáticamente el texto transcrito en la aplicación activa al finalizar el dictado",
         "pressEnter": "Pulsar Enter después de pegar",
-        "pressEnterDescription": "Envía Return una vez pegado el texto, lo que lo envía en un chat o un campo de búsqueda. El aprendizaje de correcciones se omite mientras esto está activo, porque el campo ya no está.",
+        "pressEnterDescription": "Envía Return una vez pegado el texto, lo que lo envía en un chat o un campo de búsqueda. En los dictados que envía se omite el aprendizaje de correcciones.",
+        "pressEnterDelay": "Esperar antes de enviar",
+        "pressEnterDelayDescription": "Un margen para leer el texto y detener el Return. Ajustado a la longitud: un par de segundos para una palabra y hasta doce para un párrafo. Haz clic en la píldora o pulsa Esc para cancelarlo. Iniciar otro dictado también lo cancela.",
+        "pressEnterByLength": "Según la longitud del texto",
+        "pressEnterImmediately": "Enviar de inmediato",
+        "pressEnterAfterSeconds": "Después de {{count}} segundos",
         "keepInClipboard": "Mantener transcripción en el portapapeles",
         "keepInClipboardDescription": "Mantener el texto dictado en el portapapeles para poder pegarlo manualmente si es necesario"
       },
@@ -4667,7 +4672,8 @@
       "hotkeyToSpeak": "{{hotkey}} para hablar",
       "recording": "Grabando...",
       "processing": "Procesando...",
-      "waitingForMicrophone": "Esperando el micrófono…"
+      "waitingForMicrophone": "Esperando el micrófono…",
+      "cancelSubmit": "Enviando: haz clic para cancelar"
     },
     "buttons": {
       "cancelRecording": "Cancelar grabación",

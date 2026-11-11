@@ -2898,7 +2898,12 @@
         "autoPaste": "Automatisches Einfügen",
         "autoPasteDescription": "Transkribierten Text nach dem Diktieren automatisch in die aktive App einfügen",
         "pressEnter": "Nach dem Einfügen Enter drücken",
-        "pressEnterDescription": "Sendet Return, sobald der Text eingefügt wurde, und schickt ihn damit in einem Chatfeld oder Suchfeld ab. Das Lernen von Korrekturen entfällt, solange dies aktiv ist, weil das Feld schon weg ist.",
+        "pressEnterDescription": "Sendet Return, sobald der Text eingefügt wurde, und schickt ihn damit in einem Chatfeld oder Suchfeld ab. Bei abgesendeten Diktaten entfällt das Lernen von Korrekturen.",
+        "pressEnterDelay": "Warten vor dem Absenden",
+        "pressEnterDelayDescription": "Ein Zeitfenster, um den Text zu lesen und Return zu stoppen. An die Länge angepasst: ein paar Sekunden für ein Wort, bis zu zwölf für einen Absatz. Zum Abbrechen auf die Pille klicken oder Esc drücken. Ein neues Diktat bricht es ebenfalls ab.",
+        "pressEnterByLength": "An die Textlänge anpassen",
+        "pressEnterImmediately": "Sofort absenden",
+        "pressEnterAfterSeconds": "Nach {{count}} Sekunden",
         "keepInClipboard": "Transkription in der Zwischenablage behalten",
         "keepInClipboardDescription": "Diktierten Text in der Zwischenablage behalten, damit Sie ihn bei Bedarf manuell einfügen können"
       },
@@ -4947,7 +4952,8 @@
       "hotkeyToSpeak": "{{hotkey}} zum Sprechen",
       "recording": "Aufnahme...",
       "processing": "Verarbeitung...",
-      "waitingForMicrophone": "Warte auf Mikrofon…"
+      "waitingForMicrophone": "Warte auf Mikrofon…",
+      "cancelSubmit": "Wird abgesendet — zum Abbrechen klicken"
     },
     "buttons": {
       "cancelRecording": "Aufnahme abbrechen",

@@ -451,9 +451,43 @@
   }
 }
 
+/* About to submit: ears forward and eyes wide, the pose that reads as "about to
+   act" rather than listening, with the ring draining around it. */
+.cat-identity[data-state="submitting"] .cat-ear-pose[data-side="left"] {
+  transform: rotate(-9deg);
+}
+
+.cat-identity[data-state="submitting"] .cat-ear-pose[data-side="right"] {
+  transform: rotate(9deg);
+}
+
+.cat-identity[data-state="submitting"] .cat-eye-pose {
+  transform: scale(1.12);
+}
+
+.cat-identity[data-state="submitting"] .cat-head {
+  animation: cat-submit-lean 900ms ease-in-out infinite;
+}
+
+@keyframes cat-submit-lean {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cat-identity[data-state="missed"] .cat-head {
     animation: none;
     transform: rotate(-5deg);
+  }
+
+  /* The ring still drains — it is the countdown, not decoration — but the cat
+     stops bobbing. */
+  .cat-identity[data-state="submitting"] .cat-head {
+    animation: none;
   }
 }

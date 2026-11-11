@@ -2905,7 +2905,12 @@
         "autoPaste": "Collage automatique",
         "autoPasteDescription": "Coller automatiquement le texte transcrit dans l'application active à la fin de la dictée",
         "pressEnter": "Appuyer sur Entrée après le collage",
-        "pressEnterDescription": "Envoie Entrée dès que le texte est collé, ce qui le valide dans une zone de chat ou un champ de recherche. L'apprentissage des corrections est ignoré tant que cette option est active, car le champ a déjà disparu.",
+        "pressEnterDescription": "Envoie Entrée dès que le texte est collé, ce qui le valide dans une zone de chat ou un champ de recherche. L'apprentissage des corrections est ignoré pour les dictées ainsi validées.",
+        "pressEnterDelay": "Attendre avant d'envoyer",
+        "pressEnterDelayDescription": "Un délai pour relire le texte et arrêter la touche Entrée. Ajusté à la longueur : deux secondes pour un mot, jusqu'à douze pour un paragraphe. Cliquez sur la pastille ou appuyez sur Échap pour annuler. Lancer une autre dictée annule aussi.",
+        "pressEnterByLength": "Selon la longueur du texte",
+        "pressEnterImmediately": "Envoyer tout de suite",
+        "pressEnterAfterSeconds": "Après {{count}} secondes",
         "keepInClipboard": "Garder la transcription dans le presse-papiers",
         "keepInClipboardDescription": "Conserver le texte dicté dans le presse-papiers pour pouvoir le coller manuellement si nécessaire"
       },
@@ -4975,7 +4980,8 @@
       "hotkeyToSpeak": "{{hotkey}} pour parler",
       "recording": "Enregistrement...",
       "processing": "Traitement...",
-      "waitingForMicrophone": "En attente du microphone…"
+      "waitingForMicrophone": "En attente du microphone…",
+      "cancelSubmit": "Envoi en cours — cliquez pour annuler"
     },
     "buttons": {
       "cancelRecording": "Annuler l’enregistrement",

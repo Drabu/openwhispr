@@ -2898,7 +2898,12 @@
         "autoPaste": "Automatic pasting",
         "autoPasteDescription": "Automatically paste transcribed text into the active app when dictation finishes",
         "pressEnter": "Press Enter after pasting",
-        "pressEnterDescription": "Sends Return once the text has landed, which submits it in a chat box or search field. Autocorrect learning is skipped while this is on, because the field is gone before it can watch.",
+        "pressEnterDescription": "Sends Return once the text has landed, which submits it in a chat box or search field. Autocorrect learning is skipped on the dictations it submits.",
+        "pressEnterDelay": "Wait before submitting",
+        "pressEnterDelayDescription": "A window to read the text and stop the Return. Matched to length, a couple of seconds for a word and up to twelve for a paragraph. Click the pill, or press Esc, to cancel it. Starting another dictation cancels it too.",
+        "pressEnterByLength": "Match the text length",
+        "pressEnterImmediately": "Submit at once",
+        "pressEnterAfterSeconds": "After {{count}} seconds",
         "keepInClipboard": "Keep transcription in clipboard",
         "keepInClipboardDescription": "Keep dictated text in your clipboard so you can paste it manually if needed"
       },
@@ -4947,7 +4952,8 @@
       "hotkeyToSpeak": "{{hotkey}} to talk",
       "recording": "Recording...",
       "processing": "Processing...",
-      "waitingForMicrophone": "Waiting for microphone…"
+      "waitingForMicrophone": "Waiting for microphone…",
+      "cancelSubmit": "Submitting — click to cancel"
     },
     "buttons": {
       "cancelRecording": "Cancel recording",

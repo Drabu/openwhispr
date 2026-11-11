@@ -5,6 +5,7 @@ import logger from "../utils/logger";
 import { playStartCue, playStopCue } from "../utils/dictationCues";
 import { getSettings, useSettingsStore } from "../stores/settingsStore";
 import { AMBIENT_RESUME_DELAY_MS } from "../helpers/ambientLevelGate";
+import { clampPressEnterDelayMs, submitGraceForText } from "../helpers/submitGrace";
 import { expandSnippets } from "../utils/snippets";
 import { getRecordingErrorTitle, getRecordingErrorDescription } from "../utils/recordingErrors";
 import { providerErrorActions } from "../utils/describeProviderError";
@@ -69,6 +70,75 @@ export const useAudioRecording = (toast, options = {}) => {
   const [isHearingAmbient, setIsHearingAmbient] = useState(false);
   const [isMissed, setIsMissed] = useState(false);
   const missedTimerRef = useRef(null);
+  // The pending Return after a paste. Held as a deadline rather than a ticking
+  // count so the pill can draw its own countdown at whatever rate it repaints,
+  // and so a slow frame cannot submit late.
+  const [pendingSubmit, setPendingSubmit] = useState(null);
+  const submitTimerRef = useRef(null);
+  // Esc has one owner at a time in main, and the recording path drops it on
+  // every non-recording state report. Those reports keep arriving after the
+  // paste, so without this the grace period's grab is taken straight back off
+  // it and Esc stops cancelling.
+  const submitOwnsEscRef = useRef(false);
+
+  const clearSubmitTimer = useCallback(() => {
+    if (!submitTimerRef.current) return;
+    clearTimeout(submitTimerRef.current);
+    submitTimerRef.current = null;
+  }, []);
+
+  const cancelPendingSubmit = useCallback(() => {
+    clearSubmitTimer();
+    setPendingSubmit((pending) => {
+      if (pending) logger.info("Submit after pasting cancelled", {}, "clipboard");
+      return null;
+    });
+  }, [clearSubmitTimer]);
+
+  const submitNow = useCallback(async () => {
+    clearSubmitTimer();
+    setPendingSubmit(null);
+    const result = await window.electronAPI?.pressEnter?.();
+    if (result && result.success === false) {
+      logger.info("Submit after pasting skipped", { reason: result.reason }, "clipboard");
+    }
+  }, [clearSubmitTimer]);
+
+  // Deadline set here, keystroke posted by submitNow. A zero delay still goes
+  // through the same path so there is one place the Return can come from.
+  const armSubmit = useCallback(
+    (delayMs) => {
+      clearSubmitTimer();
+      if (delayMs <= 0) {
+        void submitNow();
+        return;
+      }
+      setPendingSubmit({ deadline: Date.now() + delayMs, delayMs });
+      submitTimerRef.current = setTimeout(() => void submitNow(), delayMs);
+    },
+    [clearSubmitTimer, submitNow]
+  );
+
+  useEffect(() => clearSubmitTimer, [clearSubmitTimer]);
+
+  // Esc cancels it as well as the pill, and that needs a global grab: through
+  // the whole grace period focus is in the app the text landed in, so a
+  // renderer key listener would never see the press.
+  useEffect(() => {
+    if (!pendingSubmit) return undefined;
+    let active = true;
+    submitOwnsEscRef.current = true;
+    void window.electronAPI?.registerCancelHotkey?.("Escape");
+    const dispose = window.electronAPI?.onCancelHotkeyPressed?.(() => {
+      if (active) cancelPendingSubmit();
+    });
+    return () => {
+      active = false;
+      submitOwnsEscRef.current = false;
+      dispose?.();
+      void window.electronAPI?.unregisterCancelHotkey?.();
+    };
+  }, [pendingSubmit, cancelPendingSubmit]);
   // Deliberately not persisted: a mute that survived a restart would leave the
   // mic silently off with no memory of having asked for it.
   const [ambientMuted, setAmbientMuted] = useState(false);
@@ -220,6 +290,10 @@ export const useAudioRecording = (toast, options = {}) => {
       autoStarted = false,
     } = {}) => {
       if (startLockRef.current) return false;
+      // Dictating again is a decision about the next sentence, not consent to
+      // submit the last one — and the Return would land mid-way through this
+      // recording's own paste.
+      cancelPendingSubmit();
       lastStartOptionsRef.current = { voiceAgentRequested, translationRequested };
       startLockRef.current = true;
       stopRequestedDuringStartRef.current = false;
@@ -421,7 +495,7 @@ export const useAudioRecording = (toast, options = {}) => {
         if (manager) reportManagerLifecycle(manager, attempt ?? recordingAttemptRef.current);
       }
     },
-    [t, toast, dismissDictationError, reserveRecording, reportManagerLifecycle]
+    [t, toast, dismissDictationError, reserveRecording, reportManagerLifecycle, cancelPendingSubmit]
   );
 
   const performStopRecording = useCallback(async () => {
@@ -671,7 +745,7 @@ export const useAudioRecording = (toast, options = {}) => {
         } else if (isProcessing) {
           onDemoEventRef.current?.({ kind: demoKindRef.current, status: "processing" });
         }
-        if (!isRecording) {
+        if (!isRecording && !submitOwnsEscRef.current) {
           window.electronAPI?.unregisterCancelHotkey?.();
           // Resume media the instant recording ends, not after transcription.
           if (wasRecordingRef.current && getSettings().pauseMediaOnDictation) {
@@ -851,8 +925,13 @@ export const useAudioRecording = (toast, options = {}) => {
           }
 
           const isStreaming = result.source?.includes("streaming");
-          const { autoPasteEnabled, keepTranscriptionInClipboard, pressEnterAfterPaste } =
-            getSettings();
+          const {
+            autoPasteEnabled,
+            keepTranscriptionInClipboard,
+            pressEnterAfterPaste,
+            pressEnterDelayMs,
+            pressEnterDelayMode,
+          } = getSettings();
 
           const persistencePromise = audioManagerRef.current
             .saveTranscription(result.text, result.rawText ?? result.text, {
@@ -1095,6 +1174,13 @@ export const useAudioRecording = (toast, options = {}) => {
             // visible somewhere.
             if (pasteSucceeded) {
               window.electronAPI?.hideDictationPreview?.();
+            }
+            if (pasteSucceeded && pressEnterAfterPaste) {
+              armSubmit(
+                pressEnterDelayMode === "fixed"
+                  ? clampPressEnterDelayMs(pressEnterDelayMs)
+                  : submitGraceForText(result.text)
+              );
             }
             pasted = pasteSucceeded;
           } else if (keepTranscriptionInClipboard && !result.assistantConversation) {
@@ -1342,6 +1428,7 @@ export const useAudioRecording = (toast, options = {}) => {
     reportLifecycle,
     reportManagerLifecycle,
     reserveRecording,
+    armSubmit,
     t,
   ]);
 
@@ -1524,6 +1611,8 @@ export const useAudioRecording = (toast, options = {}) => {
     getAudioLevel,
     isHearingAmbient,
     isMissed,
+    pendingSubmit,
+    cancelPendingSubmit,
     ambientMonitorActive: ambientModeOn,
     ambientMuted,
   };

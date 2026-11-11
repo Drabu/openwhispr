@@ -3750,6 +3750,30 @@ class IPCHandlers {
       });
     });
 
+    // Posts the Return that submits a pasted transcript. Separate from the paste
+    // so a grace period can sit between them with the renderer owning the clock.
+    ipcMain.handle("press-enter", async () => {
+      const targetPid = this._pressEnterTargetPid;
+      this._pressEnterTargetPid = null;
+      if (!targetPid) return { success: false, reason: "no-paste-target" };
+
+      // Refused when focus has moved on. A delayed Return is only safe for the
+      // app the text went into — anywhere else it submits a form, sends a
+      // message or confirms a dialog the user never saw it aimed at.
+      const frontmostPid = await this.textEditMonitor?._readFrontmostPid?.();
+      if (frontmostPid && frontmostPid !== targetPid) {
+        debugLogger.info(
+          "Skipping Enter after pasting: focus moved",
+          { targetPid, frontmostPid },
+          "clipboard"
+        );
+        return { success: false, reason: "focus-moved" };
+      }
+
+      const posted = await this.clipboardManager.pressEnter();
+      return { success: posted };
+    });
+
     ipcMain.handle("paste-text", async (event, text, options) => {
       // An onboarding demo already puts the transcript in its own textarea from
       // the demo event, and that textarea is what has focus — pasting on top of
@@ -3834,12 +3858,11 @@ class IPCHandlers {
       }
       const pasted = pasteResult?.pasted !== false;
 
-      // Only when the text actually reached an application: on the clipboard-only
-      // fallback there is nothing in the field to submit, and a bare Return would
-      // send whatever was already there.
-      if (pressEnter === true && pasted) {
-        await this.clipboardManager.pressEnter();
-      }
+      // The Return itself is posted by the renderer through "press-enter", which
+      // owns the grace period and its cancel. Recorded here because this is
+      // where the target is known: only the app the text landed in may be
+      // submitted, however long the user takes to decide.
+      this._pressEnterTargetPid = pressEnter === true && pasted ? targetPid : null;
 
       debugLogger.debug("[AutoLearn] Paste completed", {
         autoLearnEnabled: this._autoLearnEnabled,

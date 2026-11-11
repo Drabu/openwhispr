@@ -2148,7 +2148,12 @@
         "autoPaste": "自动粘贴",
         "autoPasteDescription": "听写结束后自动将转录文本粘贴到当前活动的应用中",
         "pressEnter": "粘贴后按回车",
-        "pressEnterDescription": "文本落入后发送回车，从而在聊天框或搜索框中提交。启用期间不会从修改中学习，因为输入框已经不在了。",
+        "pressEnterDescription": "文本落入后发送回车，从而在聊天框或搜索框中提交。对已提交的听写不会从修改中学习。",
+        "pressEnterDelay": "提交前等待",
+        "pressEnterDelayDescription": "留出时间阅读文本并阻止回车。按长度调整：一个词几秒，一段话最多十二秒。点击胶囊或按 Esc 即可取消。开始下一次听写也会取消。",
+        "pressEnterByLength": "按文本长度",
+        "pressEnterImmediately": "立即提交",
+        "pressEnterAfterSeconds": "{{count}} 秒后",
         "keepInClipboard": "将转录内容保留在剪贴板",
         "keepInClipboardDescription": "将听写文本保留在剪贴板中，以便在需要时手动粘贴"
       },
@@ -4594,7 +4599,8 @@
       "hotkeyToSpeak": "{{hotkey}} 说话",
       "recording": "录音中...",
       "processing": "处理中...",
-      "waitingForMicrophone": "等待麦克风…"
+      "waitingForMicrophone": "等待麦克风…",
+      "cancelSubmit": "正在提交 — 点击取消"
     },
     "buttons": {
       "cancelRecording": "取消录音",

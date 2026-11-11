@@ -13,6 +13,8 @@ import {
   clampAutoStopSilenceMs,
 } from "../helpers/ambientLevelGate";
 
+import { clampPressEnterDelayMs } from "../helpers/submitGrace";
+
 export type AmbientNoiseProfileName = "quiet" | "normal" | "noisy";
 import logger from "../utils/logger";
 import whisperVadConstants from "../constants/whisperVad.json";
@@ -1139,6 +1141,12 @@ export interface SettingsState
   keepTranscriptionInClipboard: boolean;
   /** Sends Return once the transcript has landed, to submit the field it went into. */
   pressEnterAfterPaste: boolean;
+  /** Grace period before that Return, during which the pill cancels it. 0 submits at once. */
+  pressEnterDelayMs: number;
+  setPressEnterDelayMs: (value: number) => void;
+  /** "length" derives the grace period from the transcript; "fixed" uses pressEnterDelayMs. */
+  pressEnterDelayMode: "length" | "fixed";
+  setPressEnterDelayMode: (mode: "length" | "fixed") => void;
   noteFilesEnabled: boolean;
   noteFilesPath: string;
 
@@ -1966,6 +1974,10 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   autoPasteEnabled: readBoolean("autoPasteEnabled", true),
   keepTranscriptionInClipboard: readBoolean("keepTranscriptionInClipboard", false),
   pressEnterAfterPaste: readBoolean("pressEnterAfterPaste", false),
+  pressEnterDelayMs: clampPressEnterDelayMs(readNumber("pressEnterDelayMs", 3000)),
+  pressEnterDelayMode: (readString("pressEnterDelayMode", "length") === "fixed"
+    ? "fixed"
+    : "length") as "length" | "fixed",
   noteFilesEnabled: readBoolean("noteFilesEnabled", false),
   noteFilesPath: readString("noteFilesPath", ""),
   isSignedIn: readBoolean("isSignedIn", false),
@@ -2893,6 +2905,15 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setAutoPasteEnabled: createBooleanSetter("autoPasteEnabled"),
   setKeepTranscriptionInClipboard: createBooleanSetter("keepTranscriptionInClipboard"),
   setPressEnterAfterPaste: createBooleanSetter("pressEnterAfterPaste"),
+  setPressEnterDelayMs: (value: number) => {
+    const ms = clampPressEnterDelayMs(value);
+    if (isBrowser) localStorage.setItem("pressEnterDelayMs", String(ms));
+    set({ pressEnterDelayMs: ms });
+  },
+  setPressEnterDelayMode: (mode: "length" | "fixed") => {
+    if (isBrowser) localStorage.setItem("pressEnterDelayMode", mode);
+    set({ pressEnterDelayMode: mode });
+  },
   setNoteFilesEnabled: createBooleanSetter("noteFilesEnabled"),
   setNoteFilesPath: createStringSetter("noteFilesPath"),
 

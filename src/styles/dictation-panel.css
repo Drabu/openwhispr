@@ -298,6 +298,47 @@
   opacity: var(--signal-comet-opacity);
 }
 
+/* The grace period before an automatic Return, on the same boundary band as the
+   processing ring so the pill has one place it reports progress. Read as a
+   countdown rather than as work in flight: the arc depletes instead of orbiting,
+   and amber says "about to act, still stoppable" where blue says "busy".
+   Written by a rAF loop in VoicePill, as a fraction of a turn remaining. */
+@property --submit-remaining {
+  syntax: "<number>";
+  initial-value: 0;
+  inherits: true;
+}
+
+.submit-countdown-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  padding: 2.5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease-out;
+  /* Hard stop, not a blend: a soft edge on a depleting arc reads as a dimming
+     ring rather than as time left. Starts at 12 o'clock. */
+  background: conic-gradient(
+    from -90deg,
+    #f59e0b 0turn,
+    #fbbf24 calc(var(--submit-remaining) * 1turn),
+    transparent calc(var(--submit-remaining) * 1turn)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.submit-countdown-ring[data-active="true"] {
+  opacity: 1;
+}
+
 /* Gradient ring whose white-hot head cools through the bright hue into the
    deep tail. */
 .processing-signal-ring {

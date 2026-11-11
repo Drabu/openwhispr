@@ -2127,7 +2127,12 @@
         "autoPaste": "Colagem automática",
         "autoPasteDescription": "Colar automaticamente o texto transcrito no aplicativo ativo ao finalizar o ditado",
         "pressEnter": "Pressionar Enter após colar",
-        "pressEnterDescription": "Envia Return depois de o texto ser colado, enviando-o num chat ou campo de busca. O aprendizado de correções é ignorado enquanto isto estiver ativo, porque o campo já não existe.",
+        "pressEnterDescription": "Envia Return depois de o texto ser colado, enviando-o num chat ou campo de busca. Nos ditados que envia, o aprendizado de correções é ignorado.",
+        "pressEnterDelay": "Esperar antes de enviar",
+        "pressEnterDelayDescription": "Um intervalo para ler o texto e deter o Return. Ajustado ao tamanho: alguns segundos para uma palavra e até doze para um parágrafo. Clique na pílula ou pressione Esc para cancelar. Iniciar outro ditado também cancela.",
+        "pressEnterByLength": "Conforme o tamanho do texto",
+        "pressEnterImmediately": "Enviar de imediato",
+        "pressEnterAfterSeconds": "Após {{count}} segundos",
         "keepInClipboard": "Manter transcrição na área de transferência",
         "keepInClipboardDescription": "Manter o texto ditado na área de transferência para poder colar manualmente se necessário"
       },
@@ -4622,7 +4627,8 @@
       "hotkeyToSpeak": "{{hotkey}} para falar",
       "recording": "Gravando...",
       "processing": "Processando...",
-      "waitingForMicrophone": "Aguardando microfone…"
+      "waitingForMicrophone": "Aguardando microfone…",
+      "cancelSubmit": "Enviando — clique para cancelar"
     },
     "buttons": {
       "cancelRecording": "Cancelar gravação",

@@ -3,7 +3,8 @@ import { cn } from "../lib/utils";
 import { resolveWaveformBarHeight, WAVEFORM_BAR_MAX_PX, WAVEFORM_BAR_MIN_PX } from "./waveformMath";
 import "./CatIdentity.css";
 
-export type CatIdentityState = "idle" | "hearing" | "recording" | "processing" | "muted" | "missed";
+export type CatIdentityState =
+  "idle" | "hearing" | "recording" | "processing" | "muted" | "missed" | "submitting";
 
 interface CatIdentityProps {
   state: CatIdentityState;

@@ -2923,7 +2923,8 @@
       "hotkeyToSpeak": "{{hotkey}} للتحدث",
       "recording": "جاري التسجيل...",
       "processing": "جاري المعالجة...",
-      "waitingForMicrophone": "في انتظار الميكروفون…"
+      "waitingForMicrophone": "في انتظار الميكروفون…",
+      "cancelSubmit": "جارٍ الإرسال — انقر للإلغاء"
     },
     "buttons": {
       "cancelRecording": "إلغاء التسجيل",
@@ -5389,7 +5390,12 @@
         "autoPaste": "لصق تلقائي",
         "autoPasteDescription": "لصق النص المفرَّغ تلقائيًا في التطبيق النشط عند انتهاء الإملاء",
         "pressEnter": "الضغط على Enter بعد اللصق",
-        "pressEnterDescription": "يرسل Return بعد لصق النص، فيُرسله في مربع محادثة أو حقل بحث. يتم تخطّي التعلّم من التصحيحات أثناء تشغيل هذا، لأن الحقل لم يبقَ موجودًا.",
+        "pressEnterDescription": "يرسل Return بعد لصق النص، فيُرسله في مربع محادثة أو حقل بحث. يتم تخطّي التعلّم من التصحيحات في الإملاءات التي يرسلها.",
+        "pressEnterDelay": "الانتظار قبل الإرسال",
+        "pressEnterDelayDescription": "مهلة لقراءة النص وإيقاف Return. تتناسب مع الطول: ثانيتان لكلمة وحتى اثنتي عشرة لفقرة. انقر على الحبة أو اضغط Esc للإلغاء. بدء إملاء آخر يلغيه أيضًا.",
+        "pressEnterByLength": "حسب طول النص",
+        "pressEnterImmediately": "الإرسال فورًا",
+        "pressEnterAfterSeconds": "بعد {{count}} ثانية",
         "keepInClipboard": "الاحتفاظ بالنص المفرَّغ في الحافظة",
         "keepInClipboardDescription": "احتفظ بالنص المُملى في الحافظة حتى تتمكن من لصقه يدويًا إذا لزم الأمر"
       },
