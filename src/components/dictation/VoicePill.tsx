@@ -187,7 +187,9 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
   // The hidden divider's margins are what carry the compact pill's 6px
   // icon↔waveform gap; a visible divider keeps 4px flanking its 1px rule.
   const dividerMargin = showCompactPill ? (showDivider ? 4 : COMPACT_CONTENT_GAP_PX / 2) : 0;
-  const identitySize = 26;
+  // Paired with VOICE_PILL_FOOTPRINT's 6px icon inset; changing one without the
+  // other moves the waveform off the documented edge insets.
+  const identitySize = 36;
   const floatingHover = !isPanel && state === "hover";
   const footprint = showCompactPill ? VOICE_PILL_FOOTPRINT.recording : VOICE_PILL_FOOTPRINT.idle;
 
