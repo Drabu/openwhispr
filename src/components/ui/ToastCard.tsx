@@ -21,6 +21,8 @@ export interface ToastCardProps {
   role?: "alert" | "status";
   /** Adds a status icon; a toast that is neither success nor failure has none. */
   tone?: "success" | "error";
+  /** Replaces the tone's icon. The tone still drives the rest of the styling. */
+  statusIcon?: ReactNode;
   ref?: Ref<HTMLElement>;
 }
 
@@ -147,6 +149,7 @@ export function ToastCard({
   ready = true,
   role = "alert",
   tone,
+  statusIcon,
   ref,
 }: ToastCardProps) {
   const { t } = useTranslation();
@@ -155,14 +158,20 @@ export function ToastCard({
 
   const text = (
     <div className="flex min-w-0 grow basis-64 items-start">
-      {StatusIcon && (
-        <StatusIcon
-          className={cn(
-            "ms-2 mt-1 size-4.5 shrink-0",
-            tone === "success" ? "text-success" : "text-destructive"
-          )}
-          aria-hidden="true"
-        />
+      {statusIcon ? (
+        <span className="ms-2 mt-0.5 shrink-0" aria-hidden="true">
+          {statusIcon}
+        </span>
+      ) : (
+        StatusIcon && (
+          <StatusIcon
+            className={cn(
+              "ms-2 mt-1 size-4.5 shrink-0",
+              tone === "success" ? "text-success" : "text-destructive"
+            )}
+            aria-hidden="true"
+          />
+        )
       )}
       <div className="min-w-0 flex-1 break-words px-2 py-1">
         {title && <p className="text-sm font-normal leading-snug text-foreground">{title}</p>}

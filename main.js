@@ -1454,10 +1454,16 @@ async function startApp() {
     hotkeyManager.notifyRestoreFailures(savedMeetingKey, result);
   }
 
-  // Hold-to-mute needs key release, which only the native listeners report, so
-  // this callback fires for the press alone. The hold itself is driven by the
-  // down/up handlers further down; a tap just reads as a 0-length hold.
-  const muteHotkeyCallback = () => {};
+  // Drives tap mute for accelerator-backed keys only. Globe, right modifiers and
+  // mouse buttons never reach globalShortcut (accelerator: null), so they emit
+  // both signals from their own down handlers and the renderer keeps whichever
+  // matches its mute mode. Gated like the other slots: autorepeat would
+  // otherwise toggle twice per press and land back where it started.
+  const isMutePress = createHotkeyRepeatGate();
+  const muteHotkeyCallback = () => {
+    if (!isMutePress()) return;
+    windowManager.sendAmbientMuteToggle();
+  };
 
   const savedMuteKey = environmentManager.getMuteKey?.() || "";
   if (savedMuteKey) {
@@ -1690,6 +1696,7 @@ async function startApp() {
       }
       if (hotkeyManager.getSlotHotkeys("mute").some(isGlobeLikeHotkey)) {
         windowManager.sendAmbientMuteHold(true);
+        windowManager.sendAmbientMuteToggle();
       }
       if (!voiceAgentUsesGlobe && !translationUsesGlobe && !dictationUsesGlobe) {
         debugLogger?.debug("[Globe] Ignored — hotkey is not GLOBE", { currentHotkey });
@@ -1779,6 +1786,7 @@ async function startApp() {
       }
       if (hotkeyManager.slotHasHotkey("mute", modifier)) {
         windowManager.sendAmbientMuteHold(true);
+        windowManager.sendAmbientMuteToggle();
       }
 
       if (!hotkeyManager.slotHasHotkey("dictation", modifier)) return;
@@ -1873,6 +1881,10 @@ async function startApp() {
       if (hotkeyManager.slotHasHotkey("translation", button)) {
         windowManager.sendToggleTranslation();
       }
+      if (hotkeyManager.slotHasHotkey("mute", button)) {
+        windowManager.sendAmbientMuteHold(true);
+        windowManager.sendAmbientMuteToggle();
+      }
 
       if (!hotkeyManager.slotHasHotkey("dictation", button)) return;
       if (!isLiveWindow(windowManager.mainWindow)) return;
@@ -1906,6 +1918,10 @@ async function startApp() {
       if (hotkeyManager.isInListeningMode && hotkeyManager.isInListeningMode()) return;
       if (!isMouseButtonHotkey(button)) return;
       hotkeyManager.logHotkeyEvent("macos-native", "up", button);
+
+      if (hotkeyManager.slotHasHotkey("mute", button)) {
+        windowManager.sendAmbientMuteHold(false);
+      }
 
       if (!hotkeyManager.slotHasHotkey("dictation", button)) return;
       if (!isLiveWindow(windowManager.mainWindow)) return;

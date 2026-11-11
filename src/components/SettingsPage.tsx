@@ -1212,6 +1212,8 @@ export default function SettingsPage({
     meetingKey,
     muteKey,
     setMuteKey,
+    muteActivationMode,
+    setMuteActivationMode,
     setMeetingKey,
     meetingHotkeyLayoutMode,
     setMeetingHotkeyLayoutMode,
@@ -1251,6 +1253,10 @@ export default function SettingsPage({
     setAmbientIndicatorEnabled,
     autoStopOnSilence,
     setAutoStopOnSilence,
+    ambientStartMode,
+    setAmbientStartMode,
+    ambientCommitMode,
+    setAmbientCommitMode,
     autoStopSilenceMs,
     setAutoStopSilenceMs,
     startMinimized,
@@ -1571,12 +1577,14 @@ export default function SettingsPage({
         t
       );
       if (conflict) return conflict;
-      if (!isHoldCapableHotkey(hotkey)) {
+      // Only hold needs a key macOS reports a release for; tap rides
+      // globalShortcut's press, which every bindable key gives.
+      if (muteActivationMode === "hold" && !isHoldCapableHotkey(hotkey)) {
         return t("settingsPage.general.muteHotkey.needsHoldCapableKey");
       }
       return null;
     },
-    [dictationKey, meetingKey, voiceAgentKey, translationKey, t]
+    [dictationKey, meetingKey, voiceAgentKey, translationKey, muteActivationMode, t]
   );
 
   const validateVoiceAgentHotkey = useCallback(
@@ -3303,6 +3311,52 @@ export default function SettingsPage({
               <SettingsPanel>
                 <SettingsPanelRow>
                   <SettingsRow
+                    label={t("settingsPage.general.autoStop.startMode")}
+                    description={t("settingsPage.general.autoStop.startModeDescription")}
+                  >
+                    <Select
+                      value={ambientStartMode}
+                      onValueChange={(value) => setAmbientStartMode(value as "speech" | "hotkey")}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="speech">
+                          {t("settingsPage.general.autoStop.startSpeech")}
+                        </SelectItem>
+                        <SelectItem value="hotkey">
+                          {t("settingsPage.general.autoStop.startHotkey")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.autoStop.commitMode")}
+                    description={t("settingsPage.general.autoStop.commitModeDescription")}
+                  >
+                    <Select
+                      value={ambientCommitMode}
+                      onValueChange={(value) => setAmbientCommitMode(value as "silence" | "hotkey")}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="silence">
+                          {t("settingsPage.general.autoStop.commitSilence")}
+                        </SelectItem>
+                        <SelectItem value="hotkey">
+                          {t("settingsPage.general.autoStop.commitHotkey")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
                     label={t("settingsPage.general.autoStop.enable")}
                     description={t("settingsPage.general.autoStop.enableDescription")}
                   >
@@ -3317,7 +3371,7 @@ export default function SettingsPage({
                     <Select
                       value={String(autoStopSilenceMs)}
                       onValueChange={(value) => setAutoStopSilenceMs(Number(value))}
-                      disabled={!autoStopOnSilence}
+                      disabled={!autoStopOnSilence || ambientCommitMode === "hotkey"}
                     >
                       <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
                         <SelectValue />
@@ -4294,6 +4348,29 @@ EOF`,
                     disabled={isMuteHotkeyRegistering}
                     maxHotkeys={1}
                   />
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.muteHotkey.mode")}
+                    description={t("settingsPage.general.muteHotkey.modeDescription")}
+                  >
+                    <Select
+                      value={muteActivationMode}
+                      onValueChange={(value) => setMuteActivationMode(value as "tap" | "hold")}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tap">
+                          {t("settingsPage.general.muteHotkey.modeTap")}
+                        </SelectItem>
+                        <SelectItem value="hold">
+                          {t("settingsPage.general.muteHotkey.modeHold")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingsRow>
                 </SettingsPanelRow>
               </SettingsPanel>
             </div>

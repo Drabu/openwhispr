@@ -2112,12 +2112,24 @@
         "enableDescription": "Termina el dictado por sí solo en cuanto te quedas en silencio, y luego transcribe y pega. Sin esto, la grabación sigue hasta que la pares.",
         "delay": "Silencio antes de terminar",
         "delayDescription": "Cuánto debe durar la pausa. Más corto te corta a media idea; más largo hace esperar a cada dictado.",
-        "seconds": "{{count}} segundos"
+        "seconds": "{{count}} segundos",
+        "commitMode": "Terminar un dictado con",
+        "commitModeDescription": "Hablar inicia la grabación en ambos casos. Esto elige qué la termina: una pausa o tu atajo de dictado. Con atajo, se detiene a los 2 minutos como medida de seguridad.",
+        "commitSilence": "Una pausa",
+        "commitHotkey": "Pulsar el atajo",
+        "startMode": "Iniciar un dictado con",
+        "startModeDescription": "Hablar lo inicia automáticamente, o mantén el indicador activo e inícialo tú.",
+        "startSpeech": "Hablar",
+        "startHotkey": "Pulsar el atajo"
       },
       "muteHotkey": {
-        "title": "Mantener pulsado para silenciar",
-        "description": "Mientras mantienes esta tecla, el micrófono se libera y las barras del icono se congelan. Al soltarla se reanuda la escucha. Requiere una tecla cuya liberación macOS comunique.",
-        "needsHoldCapableKey": "Esta tecla no se puede mantener: macOS nunca informa de cuándo se suelta. Usa Globe/Fn, un modificador del lado derecho, un botón lateral del ratón o una combinación como Opción+Espacio."
+        "title": "Tecla de silencio",
+        "description": "Silencia el micrófono mientras la escucha ambiental está activa. Pulsar lo fija; mantener solo silencia mientras la tecla está pulsada.",
+        "needsHoldCapableKey": "Esta tecla no se puede mantener: macOS nunca informa de cuándo se suelta. Usa Globe/Fn, un modificador del lado derecho, un botón lateral del ratón o una combinación como Opción+Espacio.",
+        "mode": "Comportamiento del silencio",
+        "modeDescription": "Mantener requiere una tecla cuya liberación comunique macOS: Globe/Fn, un modificador derecho o un botón lateral del ratón.",
+        "modeTap": "Pulsar para alternar",
+        "modeHold": "Mantener para silenciar"
       },
       "floatingIcon": {
         "autoHide": "Ocultar automáticamente cuando está inactivo",

@@ -2810,12 +2810,24 @@
         "enableDescription": "Ends the dictation on its own once you have gone quiet, then transcribes and pastes. Without this, a recording runs until you stop it.",
         "delay": "Silence before finishing",
         "delayDescription": "How long a pause has to last. Shorter cuts you off mid-thought; longer makes every dictation wait.",
-        "seconds": "{{count}} seconds"
+        "seconds": "{{count}} seconds",
+        "commitMode": "Finish a dictation by",
+        "commitModeDescription": "Speech starts the recording either way. This chooses what ends it — a pause, or your dictation hotkey. Ending by hotkey still stops after 2 minutes as a backstop.",
+        "commitSilence": "A pause",
+        "commitHotkey": "Pressing the hotkey",
+        "startMode": "Start a dictation by",
+        "startModeDescription": "Speaking starts it automatically, or keep the indicator live and start it yourself.",
+        "startSpeech": "Speaking",
+        "startHotkey": "Pressing the hotkey"
       },
       "muteHotkey": {
-        "title": "Hold to mute",
-        "description": "While this key is held, the microphone is released and the icon's bars freeze. Letting go resumes listening. Needs a key macOS reports a release for.",
-        "needsHoldCapableKey": "This key can't be held — macOS never reports when it is released. Use Globe/Fn, a right-side modifier, a mouse side button, or a combination such as Option+Space."
+        "title": "Mute key",
+        "description": "Silences the microphone while ambient listening is on. Tap latches it; hold only mutes while the key is down.",
+        "needsHoldCapableKey": "This key can't be held — macOS never reports when it is released. Use Globe/Fn, a right-side modifier, a mouse side button, or a combination such as Option+Space.",
+        "mode": "Mute behaviour",
+        "modeDescription": "Hold needs a key macOS reports a release for — Globe/Fn, a right-side modifier, or a mouse side button.",
+        "modeTap": "Press to toggle",
+        "modeHold": "Hold to mute"
       },
       "floatingIcon": {
         "autoHide": "Auto-hide when idle",

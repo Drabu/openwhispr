@@ -2810,12 +2810,24 @@
         "enableDescription": "Beendet das Diktat von selbst, sobald Sie verstummt sind, und transkribiert und fügt dann ein. Ohne dies läuft eine Aufnahme, bis Sie sie stoppen.",
         "delay": "Stille vor dem Beenden",
         "delayDescription": "Wie lange eine Pause dauern muss. Kürzer unterbricht Sie mitten im Gedanken, länger lässt jedes Diktat warten.",
-        "seconds": "{{count}} Sekunden"
+        "seconds": "{{count}} Sekunden",
+        "commitMode": "Diktat beenden durch",
+        "commitModeDescription": "Sprache startet die Aufnahme in beiden Fällen. Dies wählt, was sie beendet: eine Pause oder Ihr Diktat-Tastenkürzel. Beim Tastenkürzel wird nach 2 Minuten sicherheitshalber gestoppt.",
+        "commitSilence": "Eine Pause",
+        "commitHotkey": "Tastenkürzel drücken",
+        "startMode": "Diktat starten durch",
+        "startModeDescription": "Sprechen startet es automatisch, oder die Anzeige bleibt aktiv und Sie starten selbst.",
+        "startSpeech": "Sprechen",
+        "startHotkey": "Tastenkürzel drücken"
       },
       "muteHotkey": {
-        "title": "Zum Stummschalten gedrückt halten",
-        "description": "Solange diese Taste gedrückt ist, wird das Mikrofon freigegeben und die Balken des Symbols frieren ein. Loslassen setzt das Zuhören fort. Erfordert eine Taste, deren Loslassen macOS meldet.",
-        "needsHoldCapableKey": "Diese Taste lässt sich nicht halten — macOS meldet ihr Loslassen nie. Verwenden Sie Globe/Fn, einen Modifikator auf der rechten Seite, eine seitliche Maustaste oder eine Kombination wie Option+Leertaste."
+        "title": "Stummschalttaste",
+        "description": "Schaltet das Mikrofon stumm, solange das Umgebungszuhören aktiv ist. Tippen rastet ein; Halten schaltet nur stumm, solange die Taste gedrückt ist.",
+        "needsHoldCapableKey": "Diese Taste lässt sich nicht halten — macOS meldet ihr Loslassen nie. Verwenden Sie Globe/Fn, einen Modifikator auf der rechten Seite, eine seitliche Maustaste oder eine Kombination wie Option+Leertaste.",
+        "mode": "Stummschaltverhalten",
+        "modeDescription": "Halten erfordert eine Taste, deren Loslassen macOS meldet — Globe/Fn, ein rechter Modifikator oder eine seitliche Maustaste.",
+        "modeTap": "Zum Umschalten drücken",
+        "modeHold": "Zum Stummschalten halten"
       },
       "floatingIcon": {
         "autoHide": "Automatisch ausblenden bei Inaktivität",

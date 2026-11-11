@@ -2060,12 +2060,24 @@
         "enableDescription": "当你安静下来后自动结束听写，然后转写并粘贴。不开启时，录音会一直持续到你手动停止。",
         "delay": "结束前的静音时长",
         "delayDescription": "停顿需要持续多久。太短会在你思考时打断，太长则每次听写都要等待。",
-        "seconds": "{{count}} 秒"
+        "seconds": "{{count}} 秒",
+        "commitMode": "结束听写的方式",
+        "commitModeDescription": "两种方式下说话都会开始录音。这里选择由什么结束它——停顿，或你的听写快捷键。使用快捷键时仍会在 2 分钟后兜底停止。",
+        "commitSilence": "停顿",
+        "commitHotkey": "按下快捷键",
+        "startMode": "开始听写的方式",
+        "startModeDescription": "说话会自动开始，或者保持指示灯活跃而由你自己开始。",
+        "startSpeech": "说话",
+        "startHotkey": "按下快捷键"
       },
       "muteHotkey": {
-        "title": "按住静音",
-        "description": "按住此键时会释放麦克风，图标的波形条也会静止。松开即恢复聆听。需要一个 macOS 会报告松开事件的按键。",
-        "needsHoldCapableKey": "此按键无法按住——macOS 从不报告它的松开事件。请使用 Globe/Fn、右侧修饰键、鼠标侧键，或 Option+Space 这类组合键。"
+        "title": "静音键",
+        "description": "在环境聆听开启时静音麦克风。按一下会保持静音；按住则仅在按键按下时静音。",
+        "needsHoldCapableKey": "此按键无法按住——macOS 从不报告它的松开事件。请使用 Globe/Fn、右侧修饰键、鼠标侧键，或 Option+Space 这类组合键。",
+        "mode": "静音方式",
+        "modeDescription": "按住需要 macOS 会报告松开事件的按键——Globe/Fn、右侧修饰键或鼠标侧键。",
+        "modeTap": "按一下切换",
+        "modeHold": "按住静音"
       },
       "floatingIcon": {
         "autoHide": "空闲时自动隐藏",

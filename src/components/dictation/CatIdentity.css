@@ -69,13 +69,103 @@
   transition: opacity 180ms ease-out;
 }
 
-/* idle — neutral ears, slow blink, slow tail. */
+/* idle — alive rather than static. Six loops on deliberately coprime periods
+   (4.3 / 5.2 / 6.7 / 9.1 / 11.3 / 17.3s) so their phases do not re-align for
+   minutes; the composite reads as a cat doing its own thing instead of a
+   repeating cycle. All of it is transform-only on a 26px element. */
 .cat-identity[data-state="idle"] .cat-eye {
   animation: cat-blink 5200ms ease-in-out infinite;
 }
 
 .cat-identity[data-state="idle"] .cat-tail {
   animation: cat-tail-sway 3400ms ease-in-out infinite;
+}
+
+/* Breathing. The whole head, so the ears ride it and nothing detaches. */
+.cat-identity[data-state="idle"] .cat-head {
+  animation: cat-breathe 4300ms ease-in-out infinite;
+}
+
+/* Idle drift on the glyph itself: a slow look-around the head cannot carry
+   while it is already breathing. */
+.cat-identity[data-state="idle"] .cat-identity-svg {
+  animation: cat-idle-drift 9100ms ease-in-out infinite;
+}
+
+/* Ear flicks: mostly still, one quick twitch per cycle, each ear on its own
+   period so they never fire together. */
+.cat-identity[data-state="idle"] .cat-ear[data-side="left"] {
+  animation: cat-ear-flick-left 11300ms ease-in-out infinite;
+}
+
+.cat-identity[data-state="idle"] .cat-ear[data-side="right"] {
+  animation: cat-ear-flick-right 17300ms ease-in-out infinite;
+}
+
+.cat-identity[data-state="idle"] .cat-whiskers {
+  animation: cat-whisker-drift 6700ms ease-in-out infinite;
+}
+
+@keyframes cat-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes cat-idle-drift {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  30% {
+    transform: translateX(-0.4px) rotate(-1.6deg);
+  }
+  65% {
+    transform: translateX(0.4px) rotate(1.4deg);
+  }
+}
+
+/* 94% still, 6% flick — the stillness is what makes the twitch read. */
+@keyframes cat-ear-flick-left {
+  0%,
+  88%,
+  100% {
+    transform: rotate(0deg);
+  }
+  91% {
+    transform: rotate(-13deg);
+  }
+  94% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes cat-ear-flick-right {
+  0%,
+  72%,
+  100% {
+    transform: rotate(0deg);
+  }
+  76% {
+    transform: rotate(12deg);
+  }
+  80% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes cat-whisker-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(0.35px) rotate(0.8deg);
+  }
 }
 
 /* hearing — ears perked inward and swivelling, eyes wide, head leaning. */
@@ -323,4 +413,47 @@
 /* Settled: holds the idle pose with every loop stopped. */
 .cat-identity[data-resting] * {
   animation-play-state: paused;
+}
+
+/* missed — a short apologetic head shake, ears tipped back, eyes squeezed.
+   Plays twice and settles rather than looping: the card stays on screen, and a
+   cat shaking its head forever reads as broken rather than sorry. */
+.cat-identity[data-state="missed"] .cat-head {
+  animation: cat-head-shake 520ms ease-in-out 2;
+}
+
+.cat-identity[data-state="missed"] .cat-ear-pose[data-side="left"] {
+  transform: rotate(-16deg);
+}
+
+.cat-identity[data-state="missed"] .cat-ear-pose[data-side="right"] {
+  transform: rotate(16deg);
+}
+
+.cat-identity[data-state="missed"] .cat-eye-pose {
+  transform: scale(1, 0.5);
+}
+
+.cat-identity[data-state="missed"] .cat-whiskers {
+  transform: translateY(0.5px);
+}
+
+@keyframes cat-head-shake {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-7deg);
+  }
+  75% {
+    transform: rotate(7deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-identity[data-state="missed"] .cat-head {
+    animation: none;
+    transform: rotate(-5deg);
+  }
 }

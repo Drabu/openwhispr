@@ -142,6 +142,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   ),
   onStartDictation: registerListener("start-dictation", (callback) => () => callback()),
   onStopDictation: registerListener("stop-dictation", (callback) => () => callback()),
+  onAmbientMuteToggle: registerListener("ambient-mute-toggle", (callback) => () => callback()),
   onAmbientMuteHold: registerListener(
     "ambient-mute-hold",
     (callback) => (_event, held) => callback(Boolean(held))

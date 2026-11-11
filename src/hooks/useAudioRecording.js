@@ -49,6 +49,9 @@ const WAYLAND_CLIPBOARD_REASON_KEYS = {
   "wl-copy-failed": "wlCopyFailed",
 };
 const DEMO_AUDIO_LEVEL_INTERVAL_MS = 80;
+// Two head shakes plus a beat to settle. Nothing to action and nothing to read,
+// so it expires on its own rather than waiting to be dismissed.
+const MISSED_PULSE_MS = 1600;
 
 export const useAudioRecording = (toast, options = {}) => {
   const { t } = useTranslation();
@@ -64,10 +67,20 @@ export const useAudioRecording = (toast, options = {}) => {
   const [isAssistantVoice, setIsAssistantVoice] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [isHearingAmbient, setIsHearingAmbient] = useState(false);
+  const [isMissed, setIsMissed] = useState(false);
+  const missedTimerRef = useRef(null);
   // Deliberately not persisted: a mute that survived a restart would leave the
   // mic silently off with no memory of having asked for it.
   const [ambientMuted, setAmbientMuted] = useState(false);
   const ambientIndicatorEnabled = useSettingsStore((s) => s.ambientIndicatorEnabled);
+  const muteActivationMode = useSettingsStore((s) => s.muteActivationMode);
+  const ambientStartMode = useSettingsStore((s) => s.ambientStartMode);
+  // Read inside listeners installed once, so the mode can change without
+  // tearing down and reinstalling every dictation listener.
+  const muteModeRef = useRef(muteActivationMode);
+  useEffect(() => {
+    muteModeRef.current = muteActivationMode;
+  }, [muteActivationMode]);
   const [isStopping, setIsStopping] = useState(false);
   const [micCaptureStatus, setMicCaptureStatus] = useState("inactive");
   const [transcript, setTranscript] = useState("");
@@ -134,6 +147,24 @@ export const useAudioRecording = (toast, options = {}) => {
   useEffect(() => {
     onShowTranscriptRef.current = onShowTranscript;
   });
+
+  // Nothing heard is a routine outcome of always-listening, not a failure worth
+  // a card: the pill shakes its head and goes back to listening.
+  const signalMissed = useCallback(() => {
+    if (missedTimerRef.current) clearTimeout(missedTimerRef.current);
+    setIsMissed(true);
+    missedTimerRef.current = setTimeout(() => {
+      missedTimerRef.current = null;
+      setIsMissed(false);
+    }, MISSED_PULSE_MS);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (missedTimerRef.current) clearTimeout(missedTimerRef.current);
+    },
+    []
+  );
 
   const reportLifecycle = useCallback((state, attempt = recordingAttemptRef.current) => {
     if (!attempt || attempt !== recordingAttemptRef.current) return Promise.resolve(false);
@@ -730,10 +761,7 @@ export const useAudioRecording = (toast, options = {}) => {
         if (getSettings().pauseMediaOnDictation) {
           window.electronAPI?.resumeMediaPlayback?.();
         }
-        showDictationError({
-          title: t("hooks.audioRecording.noAudio.title"),
-          description: t("hooks.audioRecording.noAudio.description"),
-        });
+        signalMissed();
       },
       onPartialTranscript: (text) => {
         onDemoEventRef.current?.({ kind: demoKindRef.current, status: "partial", text });
@@ -766,10 +794,7 @@ export const useAudioRecording = (toast, options = {}) => {
 
           if (!transcribedText) {
             window.electronAPI?.hideDictationPreview?.();
-            showDictationError({
-              title: t("hooks.audioRecording.noAudio.title"),
-              description: t("hooks.audioRecording.noAudio.description"),
-            });
+            signalMissed();
             return;
           }
 
@@ -1249,7 +1274,18 @@ export const useAudioRecording = (toast, options = {}) => {
     // Physical key state, not a toggle: main reports down and up, so a dropped
     // key-up can never strand the mic muted the way a flip-flop would.
     const disposeMuteHold = window.electronAPI.onAmbientMuteHold?.((held) => {
+      logger.debug("Mute hold reported", { held, mode: muteModeRef.current }, "audio");
+      if (muteModeRef.current !== "hold") return;
       setAmbientMuted(held);
+    });
+
+    // globalShortcut reports presses only, which is every key that is not a
+    // right-side modifier, Globe or a mouse button — so tap is the mode that
+    // works with an ordinary combo.
+    const disposeMuteToggle = window.electronAPI.onAmbientMuteToggle?.(() => {
+      logger.debug("Mute toggle received", { mode: muteModeRef.current }, "audio");
+      if (muteModeRef.current !== "tap") return;
+      setAmbientMuted((muted) => !muted);
     });
 
     const disposeForceStopped = window.electronAPI.onDictationForceStopped?.((payload) => {
@@ -1273,6 +1309,7 @@ export const useAudioRecording = (toast, options = {}) => {
       disposeCancelPreparation?.();
       disposeStop?.();
       disposeMuteHold?.();
+      disposeMuteToggle?.();
       disposeForceStopped?.();
       if (audioManagerRef.current) {
         audioManagerRef.current.cleanup();
@@ -1295,6 +1332,7 @@ export const useAudioRecording = (toast, options = {}) => {
   }, [
     toast,
     onToggle,
+    signalMissed,
     performStartRecording,
     performStopRecording,
     dismissDictationError,
@@ -1374,6 +1412,19 @@ export const useAudioRecording = (toast, options = {}) => {
     const manager = audioManagerRef.current;
     if (!manager) return undefined;
     if (!ambientIndicatorEnabled || ambientMuted) {
+      // Muting while a speech-started recording is live has to end that
+      // recording too, or the recorder keeps the device open and "muted" is a
+      // lie. Discarded rather than transcribed: the user asked it to stop
+      // listening, not to send what it already heard.
+      if (ambientMuted && manager.getState().isRecording) {
+        logger.info("Mute cancelling a live recording", {}, "audio");
+        manager.cancelRecording();
+      }
+      logger.info(
+        "Ambient monitor stopping",
+        { reason: ambientMuted ? "muted" : "disabled" },
+        "audio"
+      );
       manager.stopAmbientMonitor();
       setIsHearingAmbient(false);
       return undefined;
@@ -1384,6 +1435,9 @@ export const useAudioRecording = (toast, options = {}) => {
       setIsHearingAmbient(false);
       return undefined;
     }
+    // Each dictation can leave an orphaned track behind; collect before the
+    // monitor opens the device again rather than letting them stack up.
+    manager.releaseOrphanedCaptureTracks();
 
     let cancelled = false;
     void manager.startAmbientMonitor();
@@ -1406,12 +1460,22 @@ export const useAudioRecording = (toast, options = {}) => {
   // ends on its own via the silence auto-stop, transcribes and pastes through
   // the normal path, after which ambient listening resumes.
   useEffect(() => {
+    // Hotkey start keeps the indicator live but leaves the decision to the user,
+    // so hearing speech changes the pill and nothing else.
+    if (ambientStartMode !== "speech") return;
     if (!ambientModeOn || ambientMuted || !isHearingAmbient) return;
     if (dictationBusy || startLockRef.current) return;
     const manager = audioManagerRef.current;
     if (!manager || !canStartDictation(manager.getState())) return;
     void performStartRecording({ autoStarted: true });
-  }, [ambientModeOn, ambientMuted, isHearingAmbient, dictationBusy, performStartRecording]);
+  }, [
+    ambientStartMode,
+    ambientModeOn,
+    ambientMuted,
+    isHearingAmbient,
+    dictationBusy,
+    performStartRecording,
+  ]);
 
   useEffect(() => {
     if (!isRecording) return undefined;
@@ -1457,6 +1521,7 @@ export const useAudioRecording = (toast, options = {}) => {
     toggleListening,
     getAudioLevel,
     isHearingAmbient,
+    isMissed,
     ambientMonitorActive: ambientModeOn,
     ambientMuted,
   };

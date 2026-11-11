@@ -1132,6 +1132,14 @@ class WindowManager {
     }
   }
 
+  // Tap mute: globalShortcut only ever reports a press, so the renderer flips
+  // its own state rather than being told a physical key position.
+  sendAmbientMuteToggle() {
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send("ambient-mute-toggle");
+    }
+  }
+
   sendStopDictation() {
     if (this.hotkeyManager.isInListeningMode()) {
       return;

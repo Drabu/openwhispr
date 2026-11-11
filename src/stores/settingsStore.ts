@@ -1089,6 +1089,12 @@ export interface SettingsState
   ambientIndicatorEnabled: boolean;
   /** Finish a dictation automatically once it has gone quiet. */
   autoStopOnSilence: boolean;
+  /** How a dictation begins while ambient listening is on. */
+  ambientStartMode: "speech" | "hotkey";
+  setAmbientStartMode: (mode: "speech" | "hotkey") => void;
+  /** How a speech-started dictation ends: silence timer, or your keypress. */
+  ambientCommitMode: "silence" | "hotkey";
+  setAmbientCommitMode: (mode: "silence" | "hotkey") => void;
   /** How long the silence must last before the recording finishes itself. */
   autoStopSilenceMs: number;
   startMinimized: boolean;
@@ -1403,6 +1409,9 @@ export interface SettingsState
   setVoiceAgentKey: (key: string) => Promise<HotkeyRegistrationResult>;
   /** Hold-to-mute for the ambient monitor; "" when unbound. */
   muteKey: string;
+  /** tap latches the mute; hold only mutes while the key is physically down. */
+  muteActivationMode: "tap" | "hold";
+  setMuteActivationMode: (mode: "tap" | "hold") => void;
   setMuteKey: (key: string) => Promise<HotkeyRegistrationResult>;
   translationKey: string;
   setTranslationKey: (key: string) => Promise<HotkeyRegistrationResult>;
@@ -1815,6 +1824,8 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   activeDictationKey: null,
   meetingKey: readString("meetingKey", ""),
   muteKey: readString("muteKey", ""),
+  muteActivationMode: (readString("muteActivationMode", "tap") === "hold" ? "hold" : "tap") as
+    "tap" | "hold",
   voiceAgentKey: readString("voiceAgentKey", ""),
   translationKey: readString("translationKey", ""),
   onboardingUseCases: readStringArray("onboardingUseCases", []),
@@ -1854,6 +1865,12 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   floatingIconAutoHide: readBoolean("floatingIconAutoHide", false),
   ambientIndicatorEnabled: readBoolean("ambientIndicatorEnabled", false),
   autoStopOnSilence: readBoolean("autoStopOnSilence", false),
+  ambientStartMode: (readString("ambientStartMode", "speech") === "hotkey"
+    ? "hotkey"
+    : "speech") as "speech" | "hotkey",
+  ambientCommitMode: (readString("ambientCommitMode", "silence") === "hotkey"
+    ? "hotkey"
+    : "silence") as "silence" | "hotkey",
   autoStopSilenceMs: clampAutoStopSilenceMs(
     readNumber("autoStopSilenceMs", AUTO_STOP_SILENCE_MS_DEFAULT)
   ),
@@ -2592,6 +2609,10 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (isBrowser) localStorage.setItem("meetingKey", key);
     set({ meetingKey: key });
   },
+  setMuteActivationMode: (mode: "tap" | "hold") => {
+    if (isBrowser) localStorage.setItem("muteActivationMode", mode);
+    set({ muteActivationMode: mode });
+  },
   setMuteKey: createRegisteredHotkeySetter(
     "muteKey",
     "mute hotkey",
@@ -2690,6 +2711,14 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setPauseMediaOnDictation: createBooleanSetter("pauseMediaOnDictation"),
   setAmbientIndicatorEnabled: createBooleanSetter("ambientIndicatorEnabled"),
   setAutoStopOnSilence: createBooleanSetter("autoStopOnSilence"),
+  setAmbientStartMode: (mode: "speech" | "hotkey") => {
+    if (isBrowser) localStorage.setItem("ambientStartMode", mode);
+    set({ ambientStartMode: mode });
+  },
+  setAmbientCommitMode: (mode: "silence" | "hotkey") => {
+    if (isBrowser) localStorage.setItem("ambientCommitMode", mode);
+    set({ ambientCommitMode: mode });
+  },
   setAutoStopSilenceMs: (value: number) => {
     const clamped = clampAutoStopSilenceMs(value);
     if (isBrowser) localStorage.setItem("autoStopSilenceMs", String(clamped));

@@ -7,10 +7,10 @@ export { LIVE_TRANSCRIPT_SURFACE_LIMITS };
 // native overlay window around the compact recording pill, so these values
 // and that window size may only change together.
 export const VOICE_PILL_FOOTPRINT = Object.freeze({
-  idle: Object.freeze({ width: 40, height: 40 }),
-  // 98 = 6px edge inset + 22px icon + 6px gap + 52px waveform + 12px edge
+  idle: Object.freeze({ width: 44, height: 44 }),
+  // 102 = 6px edge inset + 26px icon + 6px gap + 52px waveform + 12px edge
   // inset (the waveform side keeps extra air; insets include the 1px border).
-  recording: Object.freeze({ width: 98, height: 36 }),
+  recording: Object.freeze({ width: 102, height: 40 }),
 });
 
 // The hover cancel control that emerges beside the pill (px). Same contract:

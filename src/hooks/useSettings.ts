@@ -74,6 +74,7 @@ export interface HotkeySettings {
   voiceAgentKey: string;
   /** Hold-to-mute for ambient listening; "" when unbound. */
   muteKey: string;
+  muteActivationMode: "tap" | "hold";
   meetingHotkeyLayoutMode: "side-panel" | "full-width";
   activationMode: "tap" | "push";
 }
@@ -344,6 +345,8 @@ function useSettingsInternal() {
     meetingKey: store.meetingKey,
     muteKey: store.muteKey,
     setMuteKey: store.setMuteKey,
+    muteActivationMode: store.muteActivationMode,
+    setMuteActivationMode: store.setMuteActivationMode,
     voiceAgentKey: store.voiceAgentKey,
     meetingHotkeyLayoutMode: store.meetingHotkeyLayoutMode,
     setMeetingHotkeyLayoutMode: store.setMeetingHotkeyLayoutMode,
@@ -416,6 +419,10 @@ function useSettingsInternal() {
     setAmbientIndicatorEnabled: store.setAmbientIndicatorEnabled,
     autoStopOnSilence: store.autoStopOnSilence,
     setAutoStopOnSilence: store.setAutoStopOnSilence,
+    ambientStartMode: store.ambientStartMode,
+    setAmbientStartMode: store.setAmbientStartMode,
+    ambientCommitMode: store.ambientCommitMode,
+    setAmbientCommitMode: store.setAmbientCommitMode,
     autoStopSilenceMs: store.autoStopSilenceMs,
     setAutoStopSilenceMs: store.setAutoStopSilenceMs,
     startMinimized: store.startMinimized,

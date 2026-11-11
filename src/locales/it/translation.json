@@ -2060,12 +2060,24 @@
         "enableDescription": "Conclude la dettatura da sola appena resti in silenzio, poi trascrive e incolla. Senza, la registrazione prosegue finché non la fermi.",
         "delay": "Silenzio prima di concludere",
         "delayDescription": "Quanto deve durare la pausa. Più breve ti interrompe a metà pensiero; più lungo fa attendere ogni dettatura.",
-        "seconds": "{{count}} secondi"
+        "seconds": "{{count}} secondi",
+        "commitMode": "Concludere una dettatura con",
+        "commitModeDescription": "La voce avvia la registrazione in entrambi i casi. Questo sceglie cosa la conclude: una pausa o la scorciatoia di dettatura. Con la scorciatoia si ferma comunque dopo 2 minuti.",
+        "commitSilence": "Una pausa",
+        "commitHotkey": "Premere la scorciatoia",
+        "startMode": "Avviare una dettatura con",
+        "startModeDescription": "Parlare la avvia automaticamente, oppure l'indicatore resta attivo e la avvii tu.",
+        "startSpeech": "La voce",
+        "startHotkey": "Premere la scorciatoia"
       },
       "muteHotkey": {
-        "title": "Tieni premuto per silenziare",
-        "description": "Mentre tieni premuto questo tasto il microfono viene rilasciato e le barre dell'icona si bloccano. Rilasciandolo l'ascolto riprende. Richiede un tasto di cui macOS segnali il rilascio.",
-        "needsHoldCapableKey": "Questo tasto non può essere tenuto premuto: macOS non segnala mai quando viene rilasciato. Usa Globe/Fn, un modificatore di destra, un tasto laterale del mouse o una combinazione come Opzione+Spazio."
+        "title": "Tasto di silenziamento",
+        "description": "Silenzia il microfono mentre l'ascolto ambientale è attivo. Premere lo blocca; tenere premuto silenzia solo finché il tasto è giù.",
+        "needsHoldCapableKey": "Questo tasto non può essere tenuto premuto: macOS non segnala mai quando viene rilasciato. Usa Globe/Fn, un modificatore di destra, un tasto laterale del mouse o una combinazione come Opzione+Spazio.",
+        "mode": "Comportamento del silenziamento",
+        "modeDescription": "Tenere premuto richiede un tasto di cui macOS segnali il rilascio: Globe/Fn, un modificatore di destra o un tasto laterale del mouse.",
+        "modeTap": "Premi per alternare",
+        "modeHold": "Tieni premuto per silenziare"
       },
       "floatingIcon": {
         "autoHide": "Nascondi automaticamente quando inattivo",

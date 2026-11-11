@@ -2817,12 +2817,24 @@
         "enableDescription": "Termine la dictée d'elle-même dès que vous vous taisez, puis transcrit et colle. Sans cela, un enregistrement continue jusqu'à ce que vous l'arrêtiez.",
         "delay": "Silence avant de terminer",
         "delayDescription": "Durée que doit atteindre la pause. Plus court vous coupe en pleine pensée ; plus long fait attendre chaque dictée.",
-        "seconds": "{{count}} secondes"
+        "seconds": "{{count}} secondes",
+        "commitMode": "Terminer une dictée par",
+        "commitModeDescription": "La parole démarre l'enregistrement dans les deux cas. Ceci choisit ce qui l'arrête : une pause ou votre raccourci de dictée. Avec le raccourci, l'arrêt survient après 2 minutes par sécurité.",
+        "commitSilence": "Une pause",
+        "commitHotkey": "Appui sur le raccourci",
+        "startMode": "Démarrer une dictée par",
+        "startModeDescription": "Parler la démarre automatiquement, ou l'indicateur reste actif et vous la démarrez vous-même.",
+        "startSpeech": "La parole",
+        "startHotkey": "Appui sur le raccourci"
       },
       "muteHotkey": {
-        "title": "Maintenir pour couper le micro",
-        "description": "Tant que cette touche est maintenue, le microphone est libéré et les barres de l'icône se figent. Le relâchement reprend l'écoute. Nécessite une touche dont macOS signale le relâchement.",
-        "needsHoldCapableKey": "Cette touche ne peut pas être maintenue : macOS ne signale jamais son relâchement. Utilisez Globe/Fn, un modificateur de droite, un bouton latéral de souris ou une combinaison comme Option+Espace."
+        "title": "Touche de sourdine",
+        "description": "Coupe le microphone pendant l'écoute ambiante. Appuyer verrouille ; maintenir ne coupe que pendant l'appui.",
+        "needsHoldCapableKey": "Cette touche ne peut pas être maintenue : macOS ne signale jamais son relâchement. Utilisez Globe/Fn, un modificateur de droite, un bouton latéral de souris ou une combinaison comme Option+Espace.",
+        "mode": "Comportement de la sourdine",
+        "modeDescription": "Maintenir nécessite une touche dont macOS signale le relâchement : Globe/Fn, un modificateur de droite ou un bouton latéral de souris.",
+        "modeTap": "Appuyer pour basculer",
+        "modeHold": "Maintenir pour couper"
       },
       "floatingIcon": {
         "autoHide": "Masquer automatiquement au repos",

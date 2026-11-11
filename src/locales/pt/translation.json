@@ -2039,12 +2039,24 @@
         "enableDescription": "Encerra o ditado sozinho assim que você fica em silêncio e então transcreve e cola. Sem isso, a gravação continua até você pará-la.",
         "delay": "Silêncio antes de encerrar",
         "delayDescription": "Quanto a pausa precisa durar. Mais curto corta você no meio do raciocínio; mais longo faz cada ditado esperar.",
-        "seconds": "{{count}} segundos"
+        "seconds": "{{count}} segundos",
+        "commitMode": "Encerrar um ditado com",
+        "commitModeDescription": "A fala inicia a gravação nos dois casos. Isto escolhe o que a encerra: uma pausa ou o seu atalho de ditado. Com atalho, para após 2 minutos por segurança.",
+        "commitSilence": "Uma pausa",
+        "commitHotkey": "Pressionar o atalho",
+        "startMode": "Iniciar um ditado com",
+        "startModeDescription": "Falar inicia automaticamente, ou mantenha o indicador ativo e inicie você mesmo.",
+        "startSpeech": "Falar",
+        "startHotkey": "Pressionar o atalho"
       },
       "muteHotkey": {
-        "title": "Manter pressionado para silenciar",
-        "description": "Enquanto esta tecla estiver pressionada, o microfone é liberado e as barras do ícone congelam. Soltar retoma a escuta. Requer uma tecla cuja liberação o macOS informe.",
-        "needsHoldCapableKey": "Esta tecla não pode ser mantida pressionada: o macOS nunca informa quando ela é solta. Use Globe/Fn, um modificador do lado direito, um botão lateral do mouse ou uma combinação como Option+Espaço."
+        "title": "Tecla de silenciar",
+        "description": "Silencia o microfone enquanto a escuta ambiente está ativa. Pressionar fixa; manter silencia apenas enquanto a tecla estiver pressionada.",
+        "needsHoldCapableKey": "Esta tecla não pode ser mantida pressionada: o macOS nunca informa quando ela é solta. Use Globe/Fn, um modificador do lado direito, um botão lateral do mouse ou uma combinação como Option+Espaço.",
+        "mode": "Comportamento do silenciar",
+        "modeDescription": "Manter exige uma tecla cuja liberação o macOS informe: Globe/Fn, um modificador do lado direito ou um botão lateral do mouse.",
+        "modeTap": "Pressionar para alternar",
+        "modeHold": "Manter para silenciar"
       },
       "floatingIcon": {
         "autoHide": "Ocultar automaticamente quando ocioso",

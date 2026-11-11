@@ -11,7 +11,15 @@ import {
 } from "../../helpers/voicePillPresentation";
 
 export type VoicePillState =
-  "idle" | "hover" | "muted" | "hearing" | "recording" | "processing" | "thinking" | "unavailable";
+  | "idle"
+  | "hover"
+  | "muted"
+  | "hearing"
+  | "missed"
+  | "recording"
+  | "processing"
+  | "thinking"
+  | "unavailable";
 
 interface VoicePillProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   variant: "floating" | "panel";
@@ -39,7 +47,7 @@ const RESTING_WAVE_HEIGHTS = Array.from(
   (_, index) => RESTING_WAVE_SILHOUETTE[index % RESTING_WAVE_SILHOUETTE.length]
 );
 
-// Icon↔waveform spacing inside the compact pill. Together with the 98px
+// Icon↔waveform spacing inside the compact pill. Together with the 102px
 // recording footprint and pr-1.5, centering lands the documented 6/12 edge
 // insets (VOICE_PILL_FOOTPRINT in voicePillPresentation.js).
 const COMPACT_CONTENT_GAP_PX = 6;
@@ -52,6 +60,7 @@ const STATE_APPEARANCE: Record<VoicePillState, string> = {
   hover: "border-border-hover bg-surface-3 text-foreground",
   muted: "border-border-hover bg-surface-1 text-muted-foreground dark:border-border/50",
   hearing: "border-border-hover bg-surface-2 text-foreground",
+  missed: "border-border/60 bg-surface-1 text-muted-foreground",
   recording: "border-border-hover bg-surface-1 text-foreground",
   processing: "border-border/60 bg-surface-1 text-foreground/70",
   thinking: "border-border/60 bg-surface-1 text-foreground",
@@ -70,6 +79,7 @@ const AMBIENT_STATE_OPACITY: Partial<Record<VoicePillState, number>> = {
   idle: 0.45,
   muted: 0.45,
   hearing: 0.85,
+  missed: 0.85,
 };
 
 // The cat has no hover or agent pose: hover is a pointer cue the chrome already
@@ -79,6 +89,7 @@ const CAT_STATE: Record<VoicePillState, CatIdentityState> = {
   hover: "idle",
   muted: "muted",
   hearing: "hearing",
+  missed: "missed",
   recording: "recording",
   processing: "processing",
   thinking: "processing",
@@ -136,7 +147,7 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
   // The hidden divider's margins are what carry the compact pill's 6px
   // icon↔waveform gap; a visible divider keeps 4px flanking its 1px rule.
   const dividerMargin = showCompactPill ? (showDivider ? 4 : COMPACT_CONTENT_GAP_PX / 2) : 0;
-  const identitySize = 22;
+  const identitySize = 26;
   const floatingHover = !isPanel && state === "hover";
   const footprint = showCompactPill ? VOICE_PILL_FOOTPRINT.recording : VOICE_PILL_FOOTPRINT.idle;
 

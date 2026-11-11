@@ -195,6 +195,7 @@ export default function App() {
     cancelProcessing,
     getAudioLevel,
     isHearingAmbient,
+    isMissed,
     ambientMonitorActive,
     ambientMuted,
   } = recording;
@@ -394,6 +395,9 @@ export default function App() {
     if (isRecording) return "recording";
     if (isVisuallyProcessing) return "processing";
     if (isHovered && !isRecording && !isVisuallyProcessing) return "hover";
+    // Outranks the ambient states so the shake is not swallowed by the next
+    // thing the mic hears.
+    if (isMissed) return "missed";
     // Hover outranks these: a pointer on the pill is a direct intent, while
     // hearing speech is ambient and would otherwise swallow the hover cue.
     if (ambientMonitorActive && ambientMuted) return "muted";

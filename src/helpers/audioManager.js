@@ -24,6 +24,7 @@ import {
 } from "./localSpeechGate";
 import {
   AMBIENT_HOLD_SECONDS,
+  AMBIENT_MAX_RECORDING_MS,
   AUTO_STOP_SPEECH_RMS,
   clampAutoStopSilenceMs,
   createAmbientLevelGateState,
@@ -804,6 +805,8 @@ class AudioManager {
     this._autoStopFired = false;
     this._autoStartedByAmbient = false;
     this._autoStopRms = 0;
+    this._captureStream = null;
+    this._openedCaptureTracks = new Set();
     this._ambientStream = null;
     this._ambientCtx = null;
     this._ambientAnalyser = null;
@@ -1536,7 +1539,40 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
       constraints
     );
     this._stampMicWarm();
+    // adoptAndClone keeps this stream as the hold master and returns a clone,
+    // so the object opened here is not the one any caller ends up holding.
+    // Tracking by reference therefore cannot find it again; register every
+    // opened track instead and sweep the registry when nothing is capturing.
+    stream.getAudioTracks().forEach((track) => this._openedCaptureTracks.add(track));
     return this.micStreamHold.adoptAndClone(stream, key);
+  }
+
+  // True when some part of the manager still legitimately needs the device.
+  _capturingNow() {
+    return Boolean(
+      this.isRecording ||
+      this.isStreaming ||
+      this.mediaRecorder?.state === "recording" ||
+      this.preparedMicCapture.active ||
+      this._ambientInterval ||
+      this._ambientStarting ||
+      this._startInProgress
+    );
+  }
+
+  // Stops every track this manager has ever opened that is still live while
+  // nothing is capturing. The OS indicator follows live tracks, not ownership,
+  // so this is the only sweep that cannot miss an orphan.
+  releaseOrphanedCaptureTracks() {
+    for (const track of this._openedCaptureTracks) {
+      if (track.readyState !== "live") this._openedCaptureTracks.delete(track);
+    }
+    if (this._capturingNow()) return 0;
+    const live = [...this._openedCaptureTracks];
+    live.forEach((track) => track.stop());
+    this._openedCaptureTracks.clear();
+    if (live.length) this._markCaptureStreamReleased();
+    return live.length;
   }
 
   // TTL-gated warm-up used only by the streaming-connection warm-up. The
@@ -1650,6 +1686,10 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
       // Without a prepared capture the tap starts here, before the mic opens.
       freshTap = prepared ? null : this._startPcmTap();
       const micStream = prepared?.stream ?? (await this._acquireCaptureStream(constraints));
+      // Held on the manager, not just inside the recorder: an error path that
+      // clears this.mediaRecorder would otherwise orphan this stream with live
+      // tracks and no reference left to stop them, keeping the mic open.
+      this._captureStream = micStream;
       const micReadyAt = performance.now();
 
       const audioTrack = micStream.getAudioTracks()[0];
@@ -2068,7 +2108,19 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
   // immediately; and fired once, so a late window can't request a second stop.
   _evaluateSilenceAutoStop(gate, rms) {
     if (!gate || !this.isRecording || this._autoStopFired) return;
-    const { autoStopOnSilence, autoStopSilenceMs } = getSettings();
+    const { autoStopOnSilence, autoStopSilenceMs, ambientCommitMode } = getSettings();
+
+    // Commit-on-hotkey: the user ends the recording, so the silence timer is
+    // off. Only the runaway backstop still applies.
+    if (this._autoStartedByAmbient && ambientCommitMode === "hotkey") {
+      const elapsed = Date.now() - (this.recordingStartTime || Date.now());
+      if (elapsed < AMBIENT_MAX_RECORDING_MS) return;
+      this._autoStopFired = true;
+      logger.info("Auto-stopping dictation at the maximum length", { elapsed }, "audio");
+      this.onAutoStopRequested?.({ reason: "max-duration" });
+      return;
+    }
+
     // A speech-started recording always auto-stops: nothing else would ever
     // end it, since the user never pressed anything to begin with.
     if (!autoStopOnSilence && !this._autoStartedByAmbient) return;
@@ -2159,6 +2211,8 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
   async startAmbientMonitor() {
     if (this._ambientInterval || this._ambientStarting) return this._ambientStarting ?? true;
 
+    this._releaseIdleRecorderStream();
+
     this._ambientStarting = (async () => {
       try {
         const constraints = await this.getAudioConstraints();
@@ -2170,9 +2224,18 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
         }
         const stream = await this._acquireCaptureStream(constraints);
         // A stop() that landed while getUserMedia was in flight must win, or the
-        // monitor leaks a live mic with nothing reading it.
+        // monitor leaks a live mic with nothing reading it. _acquireCaptureStream
+        // returns a clone and leaves the opened stream as the hold master, so
+        // stopping the clone alone keeps the device open on a monitor that no
+        // longer exists — release the master this start created too.
         if (this._ambientStarting === null) {
           stream.getTracks().forEach((track) => track.stop());
+          this.micStreamHold.drop();
+          if (this._ambientForcedHold) {
+            this._ambientForcedHold = false;
+            this.micStreamHold.setHoldSeconds(this._micHoldSeconds);
+          }
+          this.releaseOrphanedCaptureTracks();
           return false;
         }
         const ctx = new AudioContext();
@@ -2241,12 +2304,59 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     this._ambientLevelData = null;
   }
 
+  // A recording that ended through an error path leaves an inactive recorder
+  // whose stream was never stopped — cancelRecording only releases a recorder
+  // in the "recording" state. A live track keeps the device open and the OS
+  // indicator lit, so sweep it here.
+  _releaseIdleRecorderStream() {
+    if (this.isRecording || this.isStreaming || this.mediaRecorder?.state === "recording") return 0;
+    const streams = [this.mediaRecorder?.stream, this._captureStream];
+    const live = streams.flatMap((stream) =>
+      (stream?.getTracks?.() ?? []).filter((track) => track.readyState === "live")
+    );
+    live.forEach((track) => track.stop());
+    this._captureStream = null;
+    if (live.length) this._markCaptureStreamReleased();
+    return live.length;
+  }
+
   stopAmbientMonitor() {
     this.releaseAmbientCapture();
+    // Unconditional: the hold master is a live device handle whoever created
+    // it, and a stop here means nothing should be holding the mic. Gating this
+    // on _ambientForcedHold left a master alive whenever the flag had already
+    // been cleared by an earlier teardown, which is unreachable afterwards.
+    // Recordings own clones, which are independent, so this cannot cut one off.
+    this.micStreamHold.drop();
+    const sweptTracks = this._releaseIdleRecorderStream() + this.releaseOrphanedCaptureTracks();
     if (this._ambientForcedHold) {
       this._ambientForcedHold = false;
       this.micStreamHold.setHoldSeconds(this._micHoldSeconds);
     }
+    // The orange indicator stays lit for as long as anything still holds the
+    // device, so report what is left rather than assuming the release landed.
+    logger.info(
+      "Ambient monitor stopped",
+      { sweptTracks, liveTracks: this._countLiveCaptureTracks() },
+      "audio"
+    );
+  }
+
+  // Every stream this manager could still be holding, so a lit indicator can be
+  // attributed instead of guessed at.
+  _countLiveCaptureTracks() {
+    const streams = [
+      this.mediaRecorder?.stream,
+      this._captureStream,
+      this._ambientStream,
+      this.streamingStream,
+      this.micStreamHold.master,
+    ];
+    return streams.reduce(
+      (total, stream) =>
+        total + (stream?.getTracks?.() ?? []).filter((t) => t.readyState === "live").length,
+      0
+    );
   }
 
   isAmbientMonitorRunning() {

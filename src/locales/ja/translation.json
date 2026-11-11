@@ -2060,12 +2060,24 @@
         "enableDescription": "静かになると口述が自動的に終了し、文字起こしして貼り付けます。これがない場合、録音は停止するまで続きます。",
         "delay": "終了までの無音時間",
         "delayDescription": "どれだけの長さの間が必要か。短いと話の途中で切れ、長いと毎回待たされます。",
-        "seconds": "{{count}} 秒"
+        "seconds": "{{count}} 秒",
+        "commitMode": "口述を終える方法",
+        "commitModeDescription": "どちらでも発話が録音を開始します。終わり方を選びます——間を置くか、口述ホットキーを押すか。ホットキーの場合も安全のため2分で停止します。",
+        "commitSilence": "間を置く",
+        "commitHotkey": "ホットキーを押す",
+        "startMode": "口述を始める方法",
+        "startModeDescription": "話すと自動的に始まります。または表示だけ有効にして自分で始めます。",
+        "startSpeech": "話す",
+        "startHotkey": "ホットキーを押す"
       },
       "muteHotkey": {
-        "title": "押している間ミュート",
-        "description": "このキーを押している間はマイクが解放され、アイコンのバーが停止します。離すと再び待機状態に戻ります。macOS がキーの解放を通知するキーが必要です。",
-        "needsHoldCapableKey": "このキーは押し続けられません — macOS が解放を通知しないためです。Globe/Fn、右側の修飾キー、マウスのサイドボタン、または Option+Space のような組み合わせを使ってください。"
+        "title": "ミュートキー",
+        "description": "環境リスニング中にマイクをミュートします。押すと固定され、長押しは押している間だけミュートします。",
+        "needsHoldCapableKey": "このキーは押し続けられません — macOS が解放を通知しないためです。Globe/Fn、右側の修飾キー、マウスのサイドボタン、または Option+Space のような組み合わせを使ってください。",
+        "mode": "ミュートの動作",
+        "modeDescription": "長押しには macOS が解放を通知するキーが必要です — Globe/Fn、右側の修飾キー、マウスのサイドボタン。",
+        "modeTap": "押して切り替え",
+        "modeHold": "押している間ミュート"
       },
       "floatingIcon": {
         "autoHide": "使用していないときに自動で非表示",

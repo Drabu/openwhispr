@@ -3,7 +3,7 @@ import { cn } from "../lib/utils";
 import { resolveWaveformBarHeight, WAVEFORM_BAR_MAX_PX, WAVEFORM_BAR_MIN_PX } from "./waveformMath";
 import "./CatIdentity.css";
 
-export type CatIdentityState = "idle" | "hearing" | "recording" | "processing" | "muted";
+export type CatIdentityState = "idle" | "hearing" | "recording" | "processing" | "muted" | "missed";
 
 interface CatIdentityProps {
   state: CatIdentityState;
@@ -44,10 +44,10 @@ const LEVEL_RELEASE = 0.12;
 // Reduced motion still needs recording to be told apart from hearing, so the
 // ears hold a mid-level outward swivel instead of tracking the signal.
 const REDUCED_MOTION_LEVEL = 0.55;
-// The pill is on screen all day, so an idle loop that never stops is a battery
-// cost with nothing to show. The cat settles after a spell of quiet and wakes
-// on the next state change.
-const REST_AFTER_MS = 8000;
+// The pill is on screen all day, so the idle loops eventually stop. Long
+// enough that the cat reads as alive while you are at the machine, short
+// enough that it is not animating to an empty chair. Any state change wakes it.
+const REST_AFTER_MS = 45000;
 
 /**
  * Voice-state cat. The silhouette carries the state at 22px — ear angle above

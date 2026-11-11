@@ -68,6 +68,10 @@ export const AUTO_STOP_SILENCE_MS_DEFAULT = 3000;
 // hearing gate, with the lower exit level giving pauses room to breathe.
 export const AUTO_STOP_SPEECH_RMS = HEARING_RMS_EXIT;
 
+// Backstop for commit-on-hotkey: without the silence timer nothing else ends a
+// speech-started recording, and a missed keypress would record indefinitely.
+export const AMBIENT_MAX_RECORDING_MS = 120000;
+
 export function clampAutoStopSilenceMs(value) {
   const ms = Number(value);
   if (!Number.isFinite(ms)) return AUTO_STOP_SILENCE_MS_DEFAULT;
