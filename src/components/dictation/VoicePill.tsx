@@ -124,15 +124,15 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
   const showSignalGlow = !isUnavailable && isThinking;
   const isPanel = variant === "panel";
   const collapseToIdentity = collapseToLogo || isThinking;
-  // Ambient mode keeps the compact pill out permanently: the control is meant to
-  // read as always listening, so it must not expand and contract per utterance.
-  const showCompactPill =
-    !collapseToIdentity &&
-    (isRecording || ambientActive || expanded || (isPanel && !waveformOnlyWhileRecording));
   // Only when there is signal to draw. Ambient listening sat at 60fps repainting
   // flat bars all day; silence shows the resting silhouette, which costs nothing.
   const waveformLive = isRecording || state === "hearing";
-  const showDivider = showCompactPill && waveformVisible && !isRecording && !ambientActive;
+  // Widening is tied to having something to show. Holding the wide footprint
+  // through ambient silence left an empty slot, since waveformVisible is false
+  // outside the listening entrance and nothing drew in it.
+  const showCompactPill =
+    !collapseToIdentity && (waveformLive || expanded || (isPanel && !waveformOnlyWhileRecording));
+  const showDivider = showCompactPill && waveformVisible && !waveformLive;
   // The hidden divider's margins are what carry the compact pill's 6px
   // icon↔waveform gap; a visible divider keeps 4px flanking its 1px rule.
   const dividerMargin = showCompactPill ? (showDivider ? 4 : COMPACT_CONTENT_GAP_PX / 2) : 0;
@@ -245,7 +245,7 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
         <div
           className="absolute inset-0 flex items-center justify-center gap-0.75 transition-opacity duration-200 ease-out"
           style={{
-            opacity: showCompactPill && waveformVisible && !isRecording && !ambientActive ? 1 : 0,
+            opacity: showCompactPill && waveformVisible && !waveformLive ? 1 : 0,
           }}
           aria-hidden="true"
         >
