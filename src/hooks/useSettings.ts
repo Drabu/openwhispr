@@ -72,6 +72,8 @@ export interface HotkeySettings {
   activeDictationKey: string | null;
   meetingKey: string;
   voiceAgentKey: string;
+  /** Hold-to-mute for ambient listening; "" when unbound. */
+  muteKey: string;
   meetingHotkeyLayoutMode: "side-panel" | "full-width";
   activationMode: "tap" | "push";
 }
@@ -340,6 +342,8 @@ function useSettingsInternal() {
     assemblyaiApiKey: store.assemblyaiApiKey,
     dictationKey: store.dictationKey,
     meetingKey: store.meetingKey,
+    muteKey: store.muteKey,
+    setMuteKey: store.setMuteKey,
     voiceAgentKey: store.voiceAgentKey,
     meetingHotkeyLayoutMode: store.meetingHotkeyLayoutMode,
     setMeetingHotkeyLayoutMode: store.setMeetingHotkeyLayoutMode,
@@ -408,6 +412,12 @@ function useSettingsInternal() {
     setPauseMediaOnDictation: store.setPauseMediaOnDictation,
     floatingIconAutoHide: store.floatingIconAutoHide,
     setFloatingIconAutoHide: store.setFloatingIconAutoHide,
+    ambientIndicatorEnabled: store.ambientIndicatorEnabled,
+    setAmbientIndicatorEnabled: store.setAmbientIndicatorEnabled,
+    autoStopOnSilence: store.autoStopOnSilence,
+    setAutoStopOnSilence: store.setAutoStopOnSilence,
+    autoStopSilenceMs: store.autoStopSilenceMs,
+    setAutoStopSilenceMs: store.setAutoStopSilenceMs,
     startMinimized: store.startMinimized,
     setStartMinimized: store.setStartMinimized,
     panelStartPosition: store.panelStartPosition,

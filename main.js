@@ -1454,6 +1454,40 @@ async function startApp() {
     hotkeyManager.notifyRestoreFailures(savedMeetingKey, result);
   }
 
+  // Hold-to-mute needs key release, which only the native listeners report, so
+  // this callback fires for the press alone. The hold itself is driven by the
+  // down/up handlers further down; a tap just reads as a 0-length hold.
+  const muteHotkeyCallback = () => {};
+
+  const savedMuteKey = environmentManager.getMuteKey?.() || "";
+  if (savedMuteKey) {
+    const result = await hotkeyManager.registerSlot("mute", savedMuteKey, muteHotkeyCallback);
+    debugLogger.info("Mute hotkey startup registration", { savedMuteKey, ...result }, "hotkey");
+    hotkeyManager.notifyRestoreFailures(savedMuteKey, result);
+  }
+
+  ipcMain.handle("register-mute-hotkey", async (_event, hotkey) => {
+    if (hotkey) {
+      const result = await hotkeyManager.registerSlot("mute", hotkey, muteHotkeyCallback, {
+        atomic: true,
+      });
+      windowManager.reconcileNativeKeyListeners();
+      if (result.success) {
+        environmentManager.saveMuteKey(hotkey);
+        return { success: true };
+      }
+      return { success: false, message: result.error };
+    }
+    const removed = await hotkeyManager.unregisterSlot("mute");
+    if (removed === false) return { success: false };
+    environmentManager.saveMuteKey("");
+    // A key released by unbinding can never report its own key-up, so clear any
+    // hold it was holding — otherwise the mic stays muted with nothing bound.
+    windowManager.sendAmbientMuteHold(false);
+    windowManager.reconcileNativeKeyListeners();
+    return { success: true };
+  });
+
   ipcMain.handle("register-meeting-hotkey", async (_event, hotkey) => {
     if (hotkey) {
       const result = await hotkeyManager.registerSlot("meeting", hotkey, meetingHotkeyCallback, {
@@ -1654,6 +1688,9 @@ async function startApp() {
       if (translationUsesGlobe) {
         windowManager.sendToggleTranslation();
       }
+      if (hotkeyManager.getSlotHotkeys("mute").some(isGlobeLikeHotkey)) {
+        windowManager.sendAmbientMuteHold(true);
+      }
       if (!voiceAgentUsesGlobe && !translationUsesGlobe && !dictationUsesGlobe) {
         debugLogger?.debug("[Globe] Ignored — hotkey is not GLOBE", { currentHotkey });
       }
@@ -1665,6 +1702,10 @@ async function startApp() {
       // Forward to control panel for hotkey capture (Fn key released)
       if (isLiveWindow(windowManager.controlPanelWindow)) {
         windowManager.controlPanelWindow.webContents.send("globe-key-released");
+      }
+
+      if (hotkeyManager.getSlotHotkeys("mute").some(isGlobeLikeHotkey)) {
+        windowManager.sendAmbientMuteHold(false);
       }
 
       if (hotkeyManager.getSlotHotkeys("dictation").some(isGlobeLikeHotkey)) {
@@ -1736,6 +1777,9 @@ async function startApp() {
       if (hotkeyManager.slotHasHotkey("translation", modifier)) {
         windowManager.sendToggleTranslation();
       }
+      if (hotkeyManager.slotHasHotkey("mute", modifier)) {
+        windowManager.sendAmbientMuteHold(true);
+      }
 
       if (!hotkeyManager.slotHasHotkey("dictation", modifier)) return;
       if (!isLiveWindow(windowManager.mainWindow)) return;
@@ -1766,6 +1810,9 @@ async function startApp() {
 
     globeKeyManager.on("right-modifier-up", async (modifier) => {
       hotkeyManager.logHotkeyEvent("macos-native", "up", modifier);
+      if (hotkeyManager.slotHasHotkey("mute", modifier)) {
+        windowManager.sendAmbientMuteHold(false);
+      }
       if (hotkeyManager.slotHasHotkey("dictation", modifier)) {
         if (!isLiveWindow(windowManager.mainWindow)) return;
 
@@ -1802,7 +1849,7 @@ async function startApp() {
       }
     });
 
-    const MAC_NATIVE_HOTKEY_SLOTS = ["dictation", "voiceAgent", "translation"];
+    const MAC_NATIVE_HOTKEY_SLOTS = ["dictation", "voiceAgent", "translation", "mute"];
     const syncMacNativeHotkeyConfiguration = () => {
       globeKeyManager.setConfiguration(
         hotkeyManager.getMacNativeListenerConfig(MAC_NATIVE_HOTKEY_SLOTS)

@@ -2054,9 +2054,24 @@
         "themeDescription": "ライト、ダーク、またはシステムに合わせる",
         "title": "外観"
       },
+      "autoStop": {
+        "title": "無音で終了",
+        "enable": "話し終えたら停止",
+        "enableDescription": "静かになると口述が自動的に終了し、文字起こしして貼り付けます。これがない場合、録音は停止するまで続きます。",
+        "delay": "終了までの無音時間",
+        "delayDescription": "どれだけの長さの間が必要か。短いと話の途中で切れ、長いと毎回待たされます。",
+        "seconds": "{{count}} 秒"
+      },
+      "muteHotkey": {
+        "title": "押している間ミュート",
+        "description": "このキーを押している間はマイクが解放され、アイコンのバーが停止します。離すと再び待機状態に戻ります。macOS がキーの解放を通知するキーが必要です。",
+        "needsHoldCapableKey": "このキーは押し続けられません — macOS が解放を通知しないためです。Globe/Fn、右側の修飾キー、マウスのサイドボタン、または Option+Space のような組み合わせを使ってください。"
+      },
       "floatingIcon": {
         "autoHide": "使用していないときに自動で非表示",
         "autoHideDescription": "ディクテーション開始までアイコンを非表示にする",
+        "ambientIndicator": "音声を検知したら表示",
+        "ambientIndicatorDescription": "マイクを開いたままにして、話している間アイコンを明るくします。発話は自動的に口述も開始し、文字起こしして貼り付けます。不要なときはミュートキーを使ってください。",
         "description": "画面上のディクテーションアイコンの表示を制御",
         "title": "フローティングアイコン",
         "startPosition": "開始位置",

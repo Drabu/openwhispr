@@ -22,6 +22,14 @@ import {
   recordLocalSpeechWindow,
   recordPcm16SpeechWindow,
 } from "./localSpeechGate";
+import {
+  AMBIENT_HOLD_SECONDS,
+  AUTO_STOP_SPEECH_RMS,
+  clampAutoStopSilenceMs,
+  createAmbientLevelGateState,
+  isAmbientHearing,
+  recordAmbientWindow,
+} from "./ambientLevelGate";
 import { reacquireIfDead } from "./micTrackHealth";
 import { isMicWarm, WARMUP_ACQUIRE_TIMEOUT_MS } from "./micWarmState";
 import {
@@ -791,6 +799,20 @@ class AudioManager {
     this.lastAudioBlob = null;
     this.lastAudioMetadata = null;
     this._localSpeechGateState = null;
+    this._lastSpeechAtMs = 0;
+    this._heardSpeechThisRecording = false;
+    this._autoStopFired = false;
+    this._autoStartedByAmbient = false;
+    this._autoStopRms = 0;
+    this._ambientStream = null;
+    this._ambientCtx = null;
+    this._ambientAnalyser = null;
+    this._ambientSource = null;
+    this._ambientInterval = null;
+    this._ambientGateState = null;
+    this._ambientLevelData = null;
+    this._ambientStarting = null;
+    this._ambientForcedHold = false;
     this._streamingCommitActive = false;
     this._previewFlushResolve = null;
     this._batchSegments = [];
@@ -1015,6 +1037,9 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     onPartialTranscript,
     onStreamingCommit,
     onTranslationFallback,
+    // Optional: fired when the recording has gone quiet long enough to finish
+    // itself. The hook owns stopping so lifecycle reporting stays in one place.
+    onAutoStopRequested = undefined,
   }) {
     this.onStateChange = onStateChange;
     this.onError = onError;
@@ -1023,6 +1048,7 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     this.onPartialTranscript = onPartialTranscript;
     this.onStreamingCommit = onStreamingCommit;
     this.onTranslationFallback = onTranslationFallback;
+    this.onAutoStopRequested = onAutoStopRequested;
   }
 
   // Fail-open: translation degraded/failed but raw text is still pasted. Surface why.
@@ -1655,6 +1681,11 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
         this._silenceSource = this._silenceCtx.createMediaStreamSource(micStream);
         this._silenceSource.connect(this._silenceAnalyser);
         this._localSpeechGateState = createLocalSpeechGateState();
+        this._lastSpeechAtMs = Date.now();
+        // Speech already triggered this one, so the silence timer arms at once.
+        this._heardSpeechThisRecording = this._autoStartedByAmbient;
+        this._autoStopFired = false;
+        this._autoStopRms = 0;
         const dataArray = new Uint8Array(this._silenceAnalyser.fftSize);
         this._silenceInterval = setInterval(() => {
           // A stalled context reads flat silence; recording no windows fails the gate open.
@@ -1669,7 +1700,8 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
             if (abs > peak) peak = abs;
           }
           const rms = Math.sqrt(sum / dataArray.length);
-          recordLocalSpeechWindow(this._localSpeechGateState, rms, peak);
+          const gate = recordLocalSpeechWindow(this._localSpeechGateState, rms, peak);
+          this._evaluateSilenceAutoStop(gate, rms);
         }, 100);
       } catch (e) {
         logger.warn("Audio level gate setup failed, skipping", { error: e.message }, "audio");
@@ -2031,6 +2063,35 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     }
   }
 
+  // Ends a recording once it has gone quiet. Armed only after real speech, so a
+  // recording started in a silent room waits for you instead of stopping
+  // immediately; and fired once, so a late window can't request a second stop.
+  _evaluateSilenceAutoStop(gate, rms) {
+    if (!gate || !this.isRecording || this._autoStopFired) return;
+    const { autoStopOnSilence, autoStopSilenceMs } = getSettings();
+    // A speech-started recording always auto-stops: nothing else would ever
+    // end it, since the user never pressed anything to begin with.
+    if (!autoStopOnSilence && !this._autoStartedByAmbient) return;
+
+    // Smoothed so one quiet frame between syllables doesn't read as a pause.
+    this._autoStopRms = this._autoStopRms * 0.6 + rms * 0.4;
+    const now = Date.now();
+    if (this._autoStopRms >= AUTO_STOP_SPEECH_RMS) {
+      this._heardSpeechThisRecording = true;
+      this._lastSpeechAtMs = now;
+      return;
+    }
+    if (!this._heardSpeechThisRecording) return;
+
+    const silenceMs = clampAutoStopSilenceMs(autoStopSilenceMs);
+    const quietFor = now - this._lastSpeechAtMs;
+    if (quietFor < silenceMs) return;
+
+    this._autoStopFired = true;
+    logger.info("Auto-stopping dictation after silence", { silenceMs, quietFor }, "audio");
+    this.onAutoStopRequested?.({ reason: "silence" });
+  }
+
   stopRecording() {
     this.micRecovery.stop();
     if (this._rotatingBatchRecorder) {
@@ -2090,6 +2151,120 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
       sum += v * v;
     }
     return Math.sqrt(sum / this._levelData.length);
+  }
+
+  // Idle-time mic monitor behind the pill's "hearing" state. Its own stream, so
+  // it can be torn down without touching whatever the recording path owns; the
+  // caller stops it before a recording starts and restarts it afterwards.
+  async startAmbientMonitor() {
+    if (this._ambientInterval || this._ambientStarting) return this._ambientStarting ?? true;
+
+    this._ambientStarting = (async () => {
+      try {
+        const constraints = await this.getAudioConstraints();
+        // Hold the master while ambient runs so a dictation clones it instead of
+        // opening the device a second time. Restored in stopAmbientMonitor.
+        if (this.micStreamHold.holdSeconds === 0) {
+          this._ambientForcedHold = true;
+          this.micStreamHold.setHoldSeconds(AMBIENT_HOLD_SECONDS);
+        }
+        const stream = await this._acquireCaptureStream(constraints);
+        // A stop() that landed while getUserMedia was in flight must win, or the
+        // monitor leaks a live mic with nothing reading it.
+        if (this._ambientStarting === null) {
+          stream.getTracks().forEach((track) => track.stop());
+          return false;
+        }
+        const ctx = new AudioContext();
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        const source = ctx.createMediaStreamSource(stream);
+        source.connect(analyser);
+
+        this._ambientStream = stream;
+        this._ambientCtx = ctx;
+        this._ambientAnalyser = analyser;
+        this._ambientSource = source;
+        this._ambientGateState = createAmbientLevelGateState();
+        this._ambientLevelData = new Uint8Array(analyser.fftSize);
+
+        this._ambientInterval = setInterval(() => {
+          const rms = this._readAmbientRms();
+          if (rms === null) return;
+          recordAmbientWindow(this._ambientGateState, rms);
+        }, 100);
+        return true;
+      } catch (error) {
+        logger.warn("Ambient monitor start failed", { error: error?.message }, "audio");
+        this.stopAmbientMonitor();
+        return false;
+      } finally {
+        this._ambientStarting = null;
+      }
+    })();
+
+    return this._ambientStarting;
+  }
+
+  _readAmbientRms() {
+    const ctx = this._ambientCtx;
+    const analyser = this._ambientAnalyser;
+    if (!ctx || !analyser || ctx.state !== "running") return null;
+    analyser.getByteTimeDomainData(this._ambientLevelData);
+    let sum = 0;
+    for (let i = 0; i < this._ambientLevelData.length; i++) {
+      const v = (this._ambientLevelData[i] - 128) / 128;
+      sum += v * v;
+    }
+    return Math.sqrt(sum / this._ambientLevelData.length);
+  }
+
+  // Drops this consumer's clone and leaves the held master alone. A clone is
+  // independent of its master, so an ambient clone left running keeps the
+  // device open and the recorder's own open fails — this is what a dictation
+  // must call before acquiring, so it can clone the still-warm master instead.
+  releaseAmbientCapture() {
+    this._ambientStarting = null;
+    if (this._ambientInterval) {
+      clearInterval(this._ambientInterval);
+      this._ambientInterval = null;
+    }
+    this._ambientSource?.disconnect();
+    this._ambientCtx?.close().catch(() => {});
+    this._ambientStream?.getTracks().forEach((track) => track.stop());
+    this._ambientStream = null;
+    this._ambientCtx = null;
+    this._ambientAnalyser = null;
+    this._ambientSource = null;
+    this._ambientGateState = null;
+    this._ambientLevelData = null;
+  }
+
+  stopAmbientMonitor() {
+    this.releaseAmbientCapture();
+    if (this._ambientForcedHold) {
+      this._ambientForcedHold = false;
+      this.micStreamHold.setHoldSeconds(this._micHoldSeconds);
+    }
+  }
+
+  isAmbientMonitorRunning() {
+    return this._ambientInterval !== null;
+  }
+
+  // Live level for the pill while idle; null when the monitor is off so the
+  // waveform rests instead of drawing a flat line.
+  getAmbientAudioLevel() {
+    return this._ambientInterval ? this._readAmbientRms() : null;
+  }
+
+  setAutoStartedByAmbient(value) {
+    this._autoStartedByAmbient = Boolean(value);
+  }
+
+  isHearingAmbientSpeech() {
+    return isAmbientHearing(this._ambientGateState);
   }
 
   cancelRecording() {
@@ -6745,6 +6920,7 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     // Read before cleanupStreaming ends the session below.
     const streamingProviderName = this.getActiveStreamingProviderName();
     this.micRecovery.stop();
+    this.stopAmbientMonitor();
     this._unsubscribeSettings?.();
     this.preparedMicCapture.cancel();
     this._closeBatchPcmTap();

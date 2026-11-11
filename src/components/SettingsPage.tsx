@@ -86,6 +86,10 @@ import { useHotkeyRegistration } from "../hooks/useHotkeyRegistration";
 import { useHotkeyModeInfo } from "../hooks/useHotkeyModeInfo";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { validateHotkeyForSlot } from "../utils/hotkeyValidation";
+import { isHoldCapableHotkey } from "../helpers/holdCapableHotkey";
+
+// Spoken-pause lengths people actually use; the store clamps anything else.
+const AUTO_STOP_DELAY_CHOICES_MS = [2000, 3000, 5000, 8000, 12000] as const;
 import { getPlatform, getCachedPlatform } from "../utils/platform";
 import { formatHotkeyLabel } from "../utils/hotkeys";
 import {
@@ -1206,6 +1210,8 @@ export default function SettingsPage({
     setUseCleanupModel,
     setDictationKey,
     meetingKey,
+    muteKey,
+    setMuteKey,
     setMeetingKey,
     meetingHotkeyLayoutMode,
     setMeetingHotkeyLayoutMode,
@@ -1241,6 +1247,12 @@ export default function SettingsPage({
     setKeepTranscriptionInClipboard,
     floatingIconAutoHide,
     setFloatingIconAutoHide,
+    ambientIndicatorEnabled,
+    setAmbientIndicatorEnabled,
+    autoStopOnSilence,
+    setAutoStopOnSilence,
+    autoStopSilenceMs,
+    setAutoStopSilenceMs,
     startMinimized,
     setStartMinimized,
     panelStartPosition,
@@ -1459,6 +1471,22 @@ export default function SettingsPage({
     showAlert: showAlertDialog,
   });
 
+  const muteRegisterFn = useCallback(async (hotkey: string) => {
+    const result = await window.electronAPI?.registerMuteHotkey?.(hotkey);
+    return result ?? { success: false };
+  }, []);
+
+  const { registerHotkey: registerMuteHotkey, isRegistering: isMuteHotkeyRegistering } =
+    useHotkeyRegistration({
+      onSuccess: (registeredHotkey) => {
+        setMuteKey(registeredHotkey);
+      },
+      showSuccessToast: false,
+      showErrorToast: true,
+      showAlert: showAlertDialog,
+      registerFn: muteRegisterFn,
+    });
+
   const meetingRegisterFn = useCallback(async (hotkey: string) => {
     const result = await window.electronAPI?.registerMeetingHotkey?.(hotkey);
     // No `message`: useHotkeyRegistration falls back to the translated
@@ -1526,6 +1554,29 @@ export default function SettingsPage({
         t
       ),
     [dictationKey, voiceAgentKey, translationKey, t]
+  );
+
+  // Conflict check first, then the hold constraint: a key that cannot report
+  // release would bind cleanly and then never un-mute.
+  const validateMuteHotkey = useCallback(
+    (hotkey: string) => {
+      const conflict = validateHotkeyForSlot(
+        hotkey,
+        {
+          "settingsPage.general.hotkey.title": dictationKey,
+          "settingsPage.general.meetingHotkey.title": meetingKey,
+          "settingsPage.general.voiceAgentHotkey.title": voiceAgentKey,
+          "settingsPage.general.translationHotkey.title": translationKey,
+        },
+        t
+      );
+      if (conflict) return conflict;
+      if (!isHoldCapableHotkey(hotkey)) {
+        return t("settingsPage.general.muteHotkey.needsHoldCapableKey");
+      }
+      return null;
+    },
+    [dictationKey, meetingKey, voiceAgentKey, translationKey, t]
   );
 
   const validateVoiceAgentHotkey = useCallback(
@@ -3246,6 +3297,44 @@ export default function SettingsPage({
               </SettingsPanel>
             </div>
 
+            {/* Finish a dictation on silence */}
+            <div>
+              <SectionHeader title={t("settingsPage.general.autoStop.title")} />
+              <SettingsPanel>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.autoStop.enable")}
+                    description={t("settingsPage.general.autoStop.enableDescription")}
+                  >
+                    <Toggle checked={autoStopOnSilence} onChange={setAutoStopOnSilence} />
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.autoStop.delay")}
+                    description={t("settingsPage.general.autoStop.delayDescription")}
+                  >
+                    <Select
+                      value={String(autoStopSilenceMs)}
+                      onValueChange={(value) => setAutoStopSilenceMs(Number(value))}
+                      disabled={!autoStopOnSilence}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AUTO_STOP_DELAY_CHOICES_MS.map((ms) => (
+                          <SelectItem key={ms} value={String(ms)}>
+                            {t("settingsPage.general.autoStop.seconds", { count: ms / 1000 })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </SettingsRow>
+                </SettingsPanelRow>
+              </SettingsPanel>
+            </div>
+
             {/* Clipboard */}
             <div>
               <SectionHeader title={t("settingsPage.general.clipboard.title")} />
@@ -3346,6 +3435,17 @@ export default function SettingsPage({
                     description={t("settingsPage.general.floatingIcon.autoHideDescription")}
                   >
                     <Toggle checked={floatingIconAutoHide} onChange={setFloatingIconAutoHide} />
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.floatingIcon.ambientIndicator")}
+                    description={t("settingsPage.general.floatingIcon.ambientIndicatorDescription")}
+                  >
+                    <Toggle
+                      checked={ambientIndicatorEnabled}
+                      onChange={setAmbientIndicatorEnabled}
+                    />
                   </SettingsRow>
                 </SettingsPanelRow>
                 <SettingsPanelRow>
@@ -4160,6 +4260,39 @@ EOF`,
                     validate={validateTranslationHotkey}
                     disabled={isAgentHotkeyCommitting}
                     maxHotkeys={isUsingNativeShortcut ? 1 : undefined}
+                  />
+                </SettingsPanelRow>
+              </SettingsPanel>
+            </div>
+
+            {/* Hold-to-mute for ambient listening */}
+            <div>
+              <SectionHeader
+                title={t("settingsPage.general.muteHotkey.title")}
+                description={t("settingsPage.general.muteHotkey.description")}
+              />
+              <SettingsPanel>
+                <SettingsPanelRow>
+                  <HotkeyListInput
+                    value={muteKey}
+                    onChange={(list) => registerMuteHotkey(list)}
+                    onClear={async (): Promise<boolean> => {
+                      const result = await window.electronAPI?.registerMuteHotkey?.("");
+                      if (!result?.success) {
+                        showAlertDialog({
+                          title: t("hooks.hotkeyRegistration.titles.notRegistered"),
+                          description:
+                            result?.message ||
+                            t("hooks.hotkeyRegistration.errors.couldNotRegister"),
+                        });
+                        return false;
+                      }
+                      setMuteKey("");
+                      return true;
+                    }}
+                    validate={validateMuteHotkey}
+                    disabled={isMuteHotkeyRegistering}
+                    maxHotkeys={1}
                   />
                 </SettingsPanelRow>
               </SettingsPanel>

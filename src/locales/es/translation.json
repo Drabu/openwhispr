@@ -2106,9 +2106,24 @@
         "themeDescription": "Elige claro, oscuro o según tu sistema",
         "title": "Apariencia"
       },
+      "autoStop": {
+        "title": "Terminar con el silencio",
+        "enable": "Parar cuando deje de hablar",
+        "enableDescription": "Termina el dictado por sí solo en cuanto te quedas en silencio, y luego transcribe y pega. Sin esto, la grabación sigue hasta que la pares.",
+        "delay": "Silencio antes de terminar",
+        "delayDescription": "Cuánto debe durar la pausa. Más corto te corta a media idea; más largo hace esperar a cada dictado.",
+        "seconds": "{{count}} segundos"
+      },
+      "muteHotkey": {
+        "title": "Mantener pulsado para silenciar",
+        "description": "Mientras mantienes esta tecla, el micrófono se libera y las barras del icono se congelan. Al soltarla se reanuda la escucha. Requiere una tecla cuya liberación macOS comunique.",
+        "needsHoldCapableKey": "Esta tecla no se puede mantener: macOS nunca informa de cuándo se suelta. Usa Globe/Fn, un modificador del lado derecho, un botón lateral del ratón o una combinación como Opción+Espacio."
+      },
       "floatingIcon": {
         "autoHide": "Ocultar automáticamente cuando está inactivo",
         "autoHideDescription": "Mantén el ícono oculto hasta que comiences a dictar",
+        "ambientIndicator": "Mostrar cuando detecta voz",
+        "ambientIndicatorDescription": "Mantiene el micrófono abierto para que el icono se ilumine mientras hablas. Hablar también inicia por sí solo un dictado que se transcribe y se pega: usa la tecla de silencio cuando no quieras eso.",
         "description": "Controla cuándo es visible el ícono de dictado en tu pantalla",
         "title": "Ícono flotante",
         "startPosition": "Posición inicial",

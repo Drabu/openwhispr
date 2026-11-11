@@ -1755,6 +1755,8 @@ declare global {
       onMeetingStartRefused?: (callback: (code: string) => void) => () => void;
       onStartDictation?: (callback: () => void) => () => void;
       onStopDictation?: (callback: () => void) => () => void;
+      onAmbientMuteHold?: (callback: (held: boolean) => void) => () => void;
+      registerMuteHotkey?: (hotkey: string) => Promise<{ success: boolean; message?: string }>;
       onPrepareDictation?: (callback: () => void) => () => void;
       onCancelDictationPreparation?: (callback: () => void) => () => void;
       onDictationForceStopped?: (

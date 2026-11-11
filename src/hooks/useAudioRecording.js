@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import AudioManager from "../helpers/audioManager";
 import logger from "../utils/logger";
 import { playStartCue, playStopCue } from "../utils/dictationCues";
-import { getSettings } from "../stores/settingsStore";
+import { getSettings, useSettingsStore } from "../stores/settingsStore";
+import { AMBIENT_RESUME_DELAY_MS } from "../helpers/ambientLevelGate";
 import { expandSnippets } from "../utils/snippets";
 import { getRecordingErrorTitle, getRecordingErrorDescription } from "../utils/recordingErrors";
 import { providerErrorActions } from "../utils/describeProviderError";
@@ -62,6 +63,11 @@ export const useAudioRecording = (toast, options = {}) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isAssistantVoice, setIsAssistantVoice] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
+  const [isHearingAmbient, setIsHearingAmbient] = useState(false);
+  // Deliberately not persisted: a mute that survived a restart would leave the
+  // mic silently off with no memory of having asked for it.
+  const [ambientMuted, setAmbientMuted] = useState(false);
+  const ambientIndicatorEnabled = useSettingsStore((s) => s.ambientIndicatorEnabled);
   const [isStopping, setIsStopping] = useState(false);
   const [micCaptureStatus, setMicCaptureStatus] = useState("inactive");
   const [transcript, setTranscript] = useState("");
@@ -177,7 +183,11 @@ export const useAudioRecording = (toast, options = {}) => {
   );
 
   const performStartRecording = useCallback(
-    async ({ voiceAgentRequested = false, translationRequested = false } = {}) => {
+    async ({
+      voiceAgentRequested = false,
+      translationRequested = false,
+      autoStarted = false,
+    } = {}) => {
       if (startLockRef.current) return false;
       lastStartOptionsRef.current = { voiceAgentRequested, translationRequested };
       startLockRef.current = true;
@@ -188,6 +198,12 @@ export const useAudioRecording = (toast, options = {}) => {
       let attempt = null;
       try {
         if (!manager || agentRecordingRef.current) return false;
+        // Hand the device back before acquiring. The held master stays, so this
+        // recording clones a warm mic rather than reopening it.
+        manager.releaseAmbientCapture();
+        // Per-start, never sticky: a keyed or clicked dictation must not inherit
+        // the self-ending contract from a previous speech-started one.
+        manager.setAutoStartedByAmbient(autoStarted);
         const policyState = usePolicyStore.getState();
         if (
           !isManagedTranscriptionActive() &&
@@ -1099,6 +1115,11 @@ export const useAudioRecording = (toast, options = {}) => {
           await persistencePromise;
         }
       },
+      // Routed through the same stop the hotkey uses, so the transcribe-and-paste
+      // path and all its lifecycle reporting stay identical.
+      onAutoStopRequested: () => {
+        void performStopRecording();
+      },
       onTranslationFallback: ({ reason }) => {
         // Fail-open: the raw text was still pasted; the toast removes the silence.
         toast({
@@ -1180,6 +1201,7 @@ export const useAudioRecording = (toast, options = {}) => {
       if (!audioManagerRef.current || startLockRef.current) return;
       if (!canStartDictation(audioManagerRef.current.getState())) return;
       const manager = audioManagerRef.current;
+      manager.releaseAmbientCapture();
       const generation = ++preparationGenerationRef.current;
       const attempt = reserveRecording();
       setIsAssistantVoice(false);
@@ -1224,6 +1246,12 @@ export const useAudioRecording = (toast, options = {}) => {
       onToggle?.();
     });
 
+    // Physical key state, not a toggle: main reports down and up, so a dropped
+    // key-up can never strand the mic muted the way a flip-flop would.
+    const disposeMuteHold = window.electronAPI.onAmbientMuteHold?.((held) => {
+      setAmbientMuted(held);
+    });
+
     const disposeForceStopped = window.electronAPI.onDictationForceStopped?.((payload) => {
       // Listed rather than negated: a future renderer-initiated stop would not
       // leave the keys down, and must not be swept in here.
@@ -1244,6 +1272,7 @@ export const useAudioRecording = (toast, options = {}) => {
       disposePrepare?.();
       disposeCancelPreparation?.();
       disposeStop?.();
+      disposeMuteHold?.();
       disposeForceStopped?.();
       if (audioManagerRef.current) {
         audioManagerRef.current.cleanup();
@@ -1307,10 +1336,80 @@ export const useAudioRecording = (toast, options = {}) => {
     return false;
   }, []);
 
+  // Falls back to the ambient monitor so the waveform keeps moving between
+  // dictations instead of resting flat.
   const getAudioLevel = useCallback(
-    () => audioManagerRef.current?.getRecordingAudioLevel() ?? null,
+    () =>
+      audioManagerRef.current?.getRecordingAudioLevel() ??
+      audioManagerRef.current?.getAmbientAudioLevel() ??
+      null,
     []
   );
+
+  // The ambient monitor holds its own mic stream, so it must yield for the
+  // whole dictation lifecycle — preparing through processing — not just while
+  // the recorder is live, or two streams race for the same device.
+  // isPasting included: a transcript still going out is the same dictation, and
+  // the pill must not drop back to ambient idle underneath it.
+  const dictationBusy = isRecording || isPreparing || isProcessing || isStopping || isPasting;
+
+  // The pipeline reports a false lull between the recorder stopping and
+  // processAudio starting, so a bare !dictationBusy would resume ambient inside
+  // it. Require the lull to hold for AMBIENT_RESUME_DELAY_MS first.
+  const [ambientLullSettled, setAmbientLullSettled] = useState(true);
+  useEffect(() => {
+    if (dictationBusy) {
+      setAmbientLullSettled(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setAmbientLullSettled(true), AMBIENT_RESUME_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [dictationBusy]);
+
+  // Presentation stays in ambient mode while muted — the pill still reads as a
+  // listening control, just dimmed with its bars frozen. Only the mic stops.
+  const ambientModeOn = ambientIndicatorEnabled && !dictationBusy && ambientLullSettled;
+
+  useEffect(() => {
+    const manager = audioManagerRef.current;
+    if (!manager) return undefined;
+    if (!ambientIndicatorEnabled || ambientMuted) {
+      manager.stopAmbientMonitor();
+      setIsHearingAmbient(false);
+      return undefined;
+    }
+    if (!ambientModeOn) {
+      // A dictation owns the mic; give up the clone but keep the master held.
+      manager.releaseAmbientCapture();
+      setIsHearingAmbient(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    void manager.startAmbientMonitor();
+    const interval = setInterval(() => {
+      if (cancelled) return;
+      setIsHearingAmbient(manager.isHearingAmbientSpeech());
+    }, 120);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      manager.releaseAmbientCapture();
+      setIsHearingAmbient(false);
+    };
+  }, [ambientIndicatorEnabled, ambientMuted, ambientModeOn]);
+
+  // Always listening: speech itself starts the dictation. The recording then
+  // ends on its own via the silence auto-stop, transcribes and pastes through
+  // the normal path, after which ambient listening resumes.
+  useEffect(() => {
+    if (!ambientModeOn || ambientMuted || !isHearingAmbient) return;
+    if (dictationBusy || startLockRef.current) return;
+    const manager = audioManagerRef.current;
+    if (!manager || !canStartDictation(manager.getState())) return;
+    void performStartRecording({ autoStarted: true });
+  }, [ambientModeOn, ambientMuted, isHearingAmbient, dictationBusy, performStartRecording]);
 
   useEffect(() => {
     if (!isRecording) return undefined;
@@ -1355,5 +1454,8 @@ export const useAudioRecording = (toast, options = {}) => {
     cancelProcessing,
     toggleListening,
     getAudioLevel,
+    isHearingAmbient,
+    ambientMonitorActive: ambientModeOn,
+    ambientMuted,
   };
 };

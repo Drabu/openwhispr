@@ -2054,9 +2054,24 @@
         "themeDescription": "选择浅色、深色或跟随系统",
         "title": "外观"
       },
+      "autoStop": {
+        "title": "静音后结束",
+        "enable": "我停止说话时结束",
+        "enableDescription": "当你安静下来后自动结束听写，然后转写并粘贴。不开启时，录音会一直持续到你手动停止。",
+        "delay": "结束前的静音时长",
+        "delayDescription": "停顿需要持续多久。太短会在你思考时打断，太长则每次听写都要等待。",
+        "seconds": "{{count}} 秒"
+      },
+      "muteHotkey": {
+        "title": "按住静音",
+        "description": "按住此键时会释放麦克风，图标的波形条也会静止。松开即恢复聆听。需要一个 macOS 会报告松开事件的按键。",
+        "needsHoldCapableKey": "此按键无法按住——macOS 从不报告它的松开事件。请使用 Globe/Fn、右侧修饰键、鼠标侧键，或 Option+Space 这类组合键。"
+      },
       "floatingIcon": {
         "autoHide": "空闲时自动隐藏",
         "autoHideDescription": "在开始听写前保持图标隐藏",
+        "ambientIndicator": "检测到语音时变亮",
+        "ambientIndicatorDescription": "保持麦克风开启，让图标在你说话时变亮。说话还会自动开始听写，并转写后粘贴——不需要时请使用静音键。",
         "description": "控制听写图标在屏幕上的显示",
         "title": "悬浮图标",
         "startPosition": "起始位置",

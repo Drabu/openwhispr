@@ -2033,9 +2033,24 @@
         "themeDescription": "Escolha claro, escuro ou acompanhe o sistema",
         "title": "Aparência"
       },
+      "autoStop": {
+        "title": "Encerrar no silêncio",
+        "enable": "Parar quando eu parar de falar",
+        "enableDescription": "Encerra o ditado sozinho assim que você fica em silêncio e então transcreve e cola. Sem isso, a gravação continua até você pará-la.",
+        "delay": "Silêncio antes de encerrar",
+        "delayDescription": "Quanto a pausa precisa durar. Mais curto corta você no meio do raciocínio; mais longo faz cada ditado esperar.",
+        "seconds": "{{count}} segundos"
+      },
+      "muteHotkey": {
+        "title": "Manter pressionado para silenciar",
+        "description": "Enquanto esta tecla estiver pressionada, o microfone é liberado e as barras do ícone congelam. Soltar retoma a escuta. Requer uma tecla cuja liberação o macOS informe.",
+        "needsHoldCapableKey": "Esta tecla não pode ser mantida pressionada: o macOS nunca informa quando ela é solta. Use Globe/Fn, um modificador do lado direito, um botão lateral do mouse ou uma combinação como Option+Espaço."
+      },
       "floatingIcon": {
         "autoHide": "Ocultar automaticamente quando ocioso",
         "autoHideDescription": "Mantenha o ícone oculto até iniciar o ditado",
+        "ambientIndicator": "Mostrar quando detectar fala",
+        "ambientIndicatorDescription": "Mantém o microfone aberto para que o ícone fique mais claro enquanto você fala. A fala também inicia sozinha um ditado que é transcrito e colado — use a tecla de silenciar quando não quiser isso.",
         "description": "Controle quando o ícone de ditado fica visível na tela",
         "title": "Ícone flutuante",
         "startPosition": "Posição inicial",

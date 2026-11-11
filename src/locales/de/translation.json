@@ -2804,9 +2804,24 @@
         "themeDescription": "Wählen Sie zwischen Hell, Dunkel oder Systemstandard",
         "title": "Darstellung"
       },
+      "autoStop": {
+        "title": "Bei Stille beenden",
+        "enable": "Beenden, wenn ich aufhöre zu sprechen",
+        "enableDescription": "Beendet das Diktat von selbst, sobald Sie verstummt sind, und transkribiert und fügt dann ein. Ohne dies läuft eine Aufnahme, bis Sie sie stoppen.",
+        "delay": "Stille vor dem Beenden",
+        "delayDescription": "Wie lange eine Pause dauern muss. Kürzer unterbricht Sie mitten im Gedanken, länger lässt jedes Diktat warten.",
+        "seconds": "{{count}} Sekunden"
+      },
+      "muteHotkey": {
+        "title": "Zum Stummschalten gedrückt halten",
+        "description": "Solange diese Taste gedrückt ist, wird das Mikrofon freigegeben und die Balken des Symbols frieren ein. Loslassen setzt das Zuhören fort. Erfordert eine Taste, deren Loslassen macOS meldet.",
+        "needsHoldCapableKey": "Diese Taste lässt sich nicht halten — macOS meldet ihr Loslassen nie. Verwenden Sie Globe/Fn, einen Modifikator auf der rechten Seite, eine seitliche Maustaste oder eine Kombination wie Option+Leertaste."
+      },
       "floatingIcon": {
         "autoHide": "Automatisch ausblenden bei Inaktivität",
         "autoHideDescription": "Symbol ausblenden, bis Sie mit dem Diktieren beginnen",
+        "ambientIndicator": "Anzeigen, wenn Sprache erkannt wird",
+        "ambientIndicatorDescription": "Hält das Mikrofon geöffnet, damit das Symbol beim Sprechen heller wird. Sprache startet außerdem von selbst ein Diktat, das transkribiert und eingefügt wird — nutzen Sie die Stummschalttaste, wenn Sie das nicht möchten.",
         "startPosition": "Startposition",
         "startPositionDescription": "Wo das Sprachrekorder-Panel auf dem Bildschirm erscheint",
         "bottomRight": "Unten rechts",

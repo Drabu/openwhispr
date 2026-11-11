@@ -2804,9 +2804,24 @@
         "themeDescription": "Choose light, dark, or match your system",
         "title": "Appearance"
       },
+      "autoStop": {
+        "title": "Finish on silence",
+        "enable": "Stop when I stop talking",
+        "enableDescription": "Ends the dictation on its own once you have gone quiet, then transcribes and pastes. Without this, a recording runs until you stop it.",
+        "delay": "Silence before finishing",
+        "delayDescription": "How long a pause has to last. Shorter cuts you off mid-thought; longer makes every dictation wait.",
+        "seconds": "{{count}} seconds"
+      },
+      "muteHotkey": {
+        "title": "Hold to mute",
+        "description": "While this key is held, the microphone is released and the icon's bars freeze. Letting go resumes listening. Needs a key macOS reports a release for.",
+        "needsHoldCapableKey": "This key can't be held — macOS never reports when it is released. Use Globe/Fn, a right-side modifier, a mouse side button, or a combination such as Option+Space."
+      },
       "floatingIcon": {
         "autoHide": "Auto-hide when idle",
         "autoHideDescription": "Keep the icon hidden until you start dictating",
+        "ambientIndicator": "Show when it hears speech",
+        "ambientIndicatorDescription": "Keeps the microphone open so the icon brightens while you speak. Speech also starts a dictation on its own, which transcribes and pastes — use the hold-to-mute key when you do not want that.",
         "startPosition": "Start position",
         "startPositionDescription": "Where the voice recorder panel appears on screen",
         "bottomRight": "Bottom Right",

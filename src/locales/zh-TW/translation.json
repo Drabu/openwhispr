@@ -2054,9 +2054,24 @@
         "themeDescription": "選擇淺色、深色或跟隨系統",
         "title": "外觀"
       },
+      "autoStop": {
+        "title": "靜音後結束",
+        "enable": "我停止說話時結束",
+        "enableDescription": "當你安靜下來後自動結束聽寫，然後轉寫並貼上。不開啟時，錄音會一直持續到你手動停止。",
+        "delay": "結束前的靜音時長",
+        "delayDescription": "停頓需要持續多久。太短會在你思考時打斷，太長則每次聽寫都要等待。",
+        "seconds": "{{count}} 秒"
+      },
+      "muteHotkey": {
+        "title": "按住靜音",
+        "description": "按住此鍵時會釋放麥克風，圖示的波形條也會靜止。放開即恢復聆聽。需要一個 macOS 會回報放開事件的按鍵。",
+        "needsHoldCapableKey": "此按鍵無法按住——macOS 從不回報它的放開事件。請使用 Globe/Fn、右側修飾鍵、滑鼠側鍵，或 Option+Space 這類組合鍵。"
+      },
       "floatingIcon": {
         "autoHide": "閒置時自動隱藏",
         "autoHideDescription": "在開始語音輸入前保持圖示隱藏",
+        "ambientIndicator": "偵測到語音時變亮",
+        "ambientIndicatorDescription": "保持麥克風開啟，讓圖示在你說話時變亮。說話還會自動開始聽寫，並轉寫後貼上——不需要時請使用靜音鍵。",
         "description": "控制語音輸入圖示在畫面上的顯示時機",
         "title": "浮動圖示",
         "startPosition": "起始位置",

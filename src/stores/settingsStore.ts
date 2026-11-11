@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from "../config/constants";
 import i18n, { normalizeUiLanguage } from "../i18n";
 import { ensureAgentNameInDictionary } from "../utils/agentName";
 import { chooseDictionaryStartupAction } from "../helpers/dictionaryStartup";
+import { AUTO_STOP_SILENCE_MS_DEFAULT, clampAutoStopSilenceMs } from "../helpers/ambientLevelGate";
 import logger from "../utils/logger";
 import whisperVadConstants from "../constants/whisperVad.json";
 import type {
@@ -461,6 +462,8 @@ const BOOLEAN_SETTINGS = new Set([
   "audioCuesEnabled",
   "pauseMediaOnDictation",
   "floatingIconAutoHide",
+  "ambientIndicatorEnabled",
+  "autoStopOnSilence",
   "startMinimized",
   "meetingProcessDetection",
   "speakerDiarizationEnabled",
@@ -501,6 +504,7 @@ const ARRAY_SETTINGS = new Set([
 
 const NUMERIC_SETTINGS = new Set([
   "micWarmHoldSeconds",
+  "autoStopSilenceMs",
   "audioRetentionDays",
   "transcriptRetentionDays",
   "whisperVadThreshold",
@@ -1081,6 +1085,12 @@ export interface SettingsState
   audioCuesEnabled: boolean;
   pauseMediaOnDictation: boolean;
   floatingIconAutoHide: boolean;
+  /** Holds the mic open while idle so the pill can show when it hears speech. */
+  ambientIndicatorEnabled: boolean;
+  /** Finish a dictation automatically once it has gone quiet. */
+  autoStopOnSilence: boolean;
+  /** How long the silence must last before the recording finishes itself. */
+  autoStopSilenceMs: number;
   startMinimized: boolean;
   gcalAccounts: CalendarAccount[];
   gcalConnected: boolean;
@@ -1391,6 +1401,9 @@ export interface SettingsState
   setDictationKey: (key: string) => void;
   setMeetingKey: (key: string) => void;
   setVoiceAgentKey: (key: string) => Promise<HotkeyRegistrationResult>;
+  /** Hold-to-mute for the ambient monitor; "" when unbound. */
+  muteKey: string;
+  setMuteKey: (key: string) => Promise<HotkeyRegistrationResult>;
   translationKey: string;
   setTranslationKey: (key: string) => Promise<HotkeyRegistrationResult>;
   setMeetingHotkeyLayoutMode: (mode: "side-panel" | "full-width") => void;
@@ -1415,6 +1428,9 @@ export interface SettingsState
   setAudioCuesEnabled: (value: boolean) => void;
   setPauseMediaOnDictation: (value: boolean) => void;
   setFloatingIconAutoHide: (enabled: boolean) => void;
+  setAmbientIndicatorEnabled: (value: boolean) => void;
+  setAutoStopOnSilence: (value: boolean) => void;
+  setAutoStopSilenceMs: (value: number) => void;
   setStartMinimized: (enabled: boolean) => void;
   setGcalAccounts: (accounts: CalendarAccount[]) => void;
   setMcalAccounts: (accounts: MicrosoftCalendarAccount[]) => void;
@@ -1514,7 +1530,7 @@ function createNumberSetter(key: string) {
 // being persisted. Rolls back to the previous key if registration fails.
 // Resolves to false on failure so optimistic UIs (HotkeyListInput) can revert.
 function createRegisteredHotkeySetter(
-  key: "voiceAgentKey" | "translationKey",
+  key: "voiceAgentKey" | "translationKey" | "muteKey",
   label: string,
   getRegisterFn: () => ((hotkey: string) => Promise<HotkeyRegistrationResult>) | undefined,
   fallbackSave?: (hotkey: string) => void
@@ -1798,6 +1814,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   dictationKey: readString("dictationKey", ""),
   activeDictationKey: null,
   meetingKey: readString("meetingKey", ""),
+  muteKey: readString("muteKey", ""),
   voiceAgentKey: readString("voiceAgentKey", ""),
   translationKey: readString("translationKey", ""),
   onboardingUseCases: readStringArray("onboardingUseCases", []),
@@ -1835,6 +1852,11 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   audioCuesEnabled: readBoolean("audioCuesEnabled", true),
   pauseMediaOnDictation: readBoolean("pauseMediaOnDictation", false),
   floatingIconAutoHide: readBoolean("floatingIconAutoHide", false),
+  ambientIndicatorEnabled: readBoolean("ambientIndicatorEnabled", false),
+  autoStopOnSilence: readBoolean("autoStopOnSilence", false),
+  autoStopSilenceMs: clampAutoStopSilenceMs(
+    readNumber("autoStopSilenceMs", AUTO_STOP_SILENCE_MS_DEFAULT)
+  ),
   startMinimized: readBoolean("startMinimized", false),
   notificationsEnabled: readBoolean("notificationsEnabled", true),
   notifyMeetingDetection: readBoolean("notifyMeetingDetection", true),
@@ -2570,6 +2592,11 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (isBrowser) localStorage.setItem("meetingKey", key);
     set({ meetingKey: key });
   },
+  setMuteKey: createRegisteredHotkeySetter(
+    "muteKey",
+    "mute hotkey",
+    () => window.electronAPI?.registerMuteHotkey
+  ),
   setVoiceAgentKey: createRegisteredHotkeySetter(
     "voiceAgentKey",
     "voice agent hotkey",
@@ -2661,6 +2688,13 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setSaveDiscardedTranscriptions: createBooleanSetter("saveDiscardedTranscriptions"),
   setAudioCuesEnabled: createBooleanSetter("audioCuesEnabled"),
   setPauseMediaOnDictation: createBooleanSetter("pauseMediaOnDictation"),
+  setAmbientIndicatorEnabled: createBooleanSetter("ambientIndicatorEnabled"),
+  setAutoStopOnSilence: createBooleanSetter("autoStopOnSilence"),
+  setAutoStopSilenceMs: (value: number) => {
+    const clamped = clampAutoStopSilenceMs(value);
+    if (isBrowser) localStorage.setItem("autoStopSilenceMs", String(clamped));
+    set({ autoStopSilenceMs: clamped });
+  },
 
   setFloatingIconAutoHide: (enabled: boolean) => {
     if (get().floatingIconAutoHide === enabled) return;

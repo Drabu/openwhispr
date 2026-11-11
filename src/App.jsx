@@ -194,6 +194,9 @@ export default function App() {
     cancelRecording,
     cancelProcessing,
     getAudioLevel,
+    isHearingAmbient,
+    ambientMonitorActive,
+    ambientMuted,
   } = recording;
   const isVisuallyProcessing = isProcessing || isPreparing || isStopping;
 
@@ -391,6 +394,10 @@ export default function App() {
     if (isRecording) return "recording";
     if (isVisuallyProcessing) return "processing";
     if (isHovered && !isRecording && !isVisuallyProcessing) return "hover";
+    // Hover outranks these: a pointer on the pill is a direct intent, while
+    // hearing speech is ambient and would otherwise swallow the hover cue.
+    if (ambientMonitorActive && ambientMuted) return "muted";
+    if (ambientMonitorActive && isHearingAmbient) return "hearing";
     return "idle";
   };
 
@@ -536,6 +543,7 @@ export default function App() {
               getAudioLevel={getAudioLevel}
               isDragging={isDragging}
               horizontalDirection={voiceHorizontalDirection}
+              ambientActive={ambientMonitorActive}
               role={pillIsInteractive ? "button" : "status"}
               tabIndex={pillIsInteractive ? 0 : undefined}
               aria-label={

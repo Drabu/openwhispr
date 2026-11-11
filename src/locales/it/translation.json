@@ -2054,9 +2054,24 @@
         "themeDescription": "Scegli chiaro, scuro o in base al sistema",
         "title": "Aspetto"
       },
+      "autoStop": {
+        "title": "Termina al silenzio",
+        "enable": "Fermati quando smetto di parlare",
+        "enableDescription": "Conclude la dettatura da sola appena resti in silenzio, poi trascrive e incolla. Senza, la registrazione prosegue finché non la fermi.",
+        "delay": "Silenzio prima di concludere",
+        "delayDescription": "Quanto deve durare la pausa. Più breve ti interrompe a metà pensiero; più lungo fa attendere ogni dettatura.",
+        "seconds": "{{count}} secondi"
+      },
+      "muteHotkey": {
+        "title": "Tieni premuto per silenziare",
+        "description": "Mentre tieni premuto questo tasto il microfono viene rilasciato e le barre dell'icona si bloccano. Rilasciandolo l'ascolto riprende. Richiede un tasto di cui macOS segnali il rilascio.",
+        "needsHoldCapableKey": "Questo tasto non può essere tenuto premuto: macOS non segnala mai quando viene rilasciato. Usa Globe/Fn, un modificatore di destra, un tasto laterale del mouse o una combinazione come Opzione+Spazio."
+      },
       "floatingIcon": {
         "autoHide": "Nascondi automaticamente quando inattivo",
         "autoHideDescription": "Mantieni l'icona nascosta finché non inizi a dettare",
+        "ambientIndicator": "Mostra quando rileva la voce",
+        "ambientIndicatorDescription": "Mantiene il microfono aperto così l'icona si illumina mentre parli. La voce avvia anche da sola una dettatura che viene trascritta e incollata: usa il tasto di silenziamento quando non lo vuoi.",
         "description": "Controlla quando l'icona di dettatura è visibile sullo schermo",
         "title": "Icona flottante",
         "startPosition": "Posizione iniziale",

@@ -1123,6 +1123,15 @@ class WindowManager {
     }
   }
 
+  // Hold-to-mute: the renderer owns the ambient monitor, so main only reports
+  // the key's physical state. Deliberately ungated — mute must still release
+  // when a recording starts mid-hold, or the mic stays off with the key up.
+  sendAmbientMuteHold(held) {
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send("ambient-mute-hold", Boolean(held));
+    }
+  }
+
   sendStopDictation() {
     if (this.hotkeyManager.isInListeningMode()) {
       return;

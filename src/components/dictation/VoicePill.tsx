@@ -3,6 +3,7 @@ import { ChevronUp } from "../icons";
 import { cn } from "../lib/utils";
 import { PillWaveform } from "./PillWaveform";
 import { VoiceIdentityIcon } from "./VoiceIdentityIcon";
+import { CatIdentity, type CatIdentityState } from "./CatIdentity";
 import { RESTING_WAVE_SILHOUETTE, WAVEFORM_BAR_COUNT } from "./waveformMath";
 import {
   VOICE_PILL_FOOTPRINT,
@@ -10,7 +11,7 @@ import {
 } from "../../helpers/voicePillPresentation";
 
 export type VoicePillState =
-  "idle" | "hover" | "recording" | "processing" | "thinking" | "unavailable";
+  "idle" | "hover" | "muted" | "hearing" | "recording" | "processing" | "thinking" | "unavailable";
 
 interface VoicePillProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   variant: "floating" | "panel";
@@ -27,6 +28,8 @@ interface VoicePillProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"
   showExpandChevron?: boolean;
   isDragging?: boolean;
   horizontalDirection?: "left" | "right";
+  /** Ambient mic monitor is running: the pill dims at rest and lifts on speech. */
+  ambientActive?: boolean;
 }
 
 // Sized from WAVEFORM_BAR_COUNT so a bar-count change can never silently
@@ -47,11 +50,45 @@ const COMPACT_CONTENT_GAP_PX = 6;
 const STATE_APPEARANCE: Record<VoicePillState, string> = {
   idle: "border-border-hover bg-surface-1 text-muted-foreground dark:border-border/50",
   hover: "border-border-hover bg-surface-3 text-foreground",
+  muted: "border-border-hover bg-surface-1 text-muted-foreground dark:border-border/50",
+  hearing: "border-border-hover bg-surface-2 text-foreground",
   recording: "border-border-hover bg-surface-1 text-foreground",
   processing: "border-border/60 bg-surface-1 text-foreground/70",
   thinking: "border-border/60 bg-surface-1 text-foreground",
   unavailable: "border-border/60 bg-surface-1 text-muted-foreground",
 };
+
+// Ambient listening reads as a brightness ramp, not motion: the pill rests
+// dim, lifts when it hears speech, and goes solid once it is actually
+// recording. Widening instead would resize the window on every passing sound.
+// Only the ambient monitor dims anything — with it off the pill keeps the
+// full-opacity chrome it has always had.
+// Muted and listening-but-silent share a brightness on purpose: both mean
+// "nothing is being said". They are told apart by motion instead — muted
+// freezes the bars, idle keeps them drifting.
+const AMBIENT_STATE_OPACITY: Partial<Record<VoicePillState, number>> = {
+  idle: 0.45,
+  muted: 0.45,
+  hearing: 0.85,
+};
+
+// The cat has no hover or agent pose: hover is a pointer cue the chrome already
+// carries, and a dead mic reads as the shut-down pose rather than a fake calm.
+const CAT_STATE: Record<VoicePillState, CatIdentityState> = {
+  idle: "idle",
+  hover: "idle",
+  muted: "muted",
+  hearing: "hearing",
+  recording: "recording",
+  processing: "processing",
+  thinking: "processing",
+  unavailable: "muted",
+};
+
+function resolvePillOpacity(state: VoicePillState, ambientActive: boolean): number | undefined {
+  if (!ambientActive) return undefined;
+  return AMBIENT_STATE_OPACITY[state];
+}
 
 /** One persistent control that resizes between the floating and panel layouts. */
 export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function VoicePill(
@@ -69,6 +106,7 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
     showExpandChevron = false,
     isDragging = false,
     horizontalDirection = "right",
+    ambientActive = false,
     className,
     style,
     ...props
@@ -86,9 +124,15 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
   const showSignalGlow = !isUnavailable && isThinking;
   const isPanel = variant === "panel";
   const collapseToIdentity = collapseToLogo || isThinking;
+  // Ambient mode keeps the compact pill out permanently: the control is meant to
+  // read as always listening, so it must not expand and contract per utterance.
   const showCompactPill =
-    !collapseToIdentity && (isRecording || expanded || (isPanel && !waveformOnlyWhileRecording));
-  const showDivider = showCompactPill && waveformVisible && !isRecording;
+    !collapseToIdentity &&
+    (isRecording || ambientActive || expanded || (isPanel && !waveformOnlyWhileRecording));
+  // Only when there is signal to draw. Ambient listening sat at 60fps repainting
+  // flat bars all day; silence shows the resting silhouette, which costs nothing.
+  const waveformLive = isRecording || state === "hearing";
+  const showDivider = showCompactPill && waveformVisible && !isRecording && !ambientActive;
   // The hidden divider's margins are what carry the compact pill's 6px
   // icon↔waveform gap; a visible divider keeps 4px flanking its 1px rule.
   const dividerMargin = showCompactPill ? (showDivider ? 4 : COMPACT_CONTENT_GAP_PX / 2) : 0;
@@ -117,7 +161,8 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
         // owns the chrome — an inline shadow would outrank it and paint a
         // phantom capsule when a de-fusing skin lingers over a hovered pill.
         boxShadow: floatingHover && !liquidFused ? "var(--shadow-card-hover-subtle)" : undefined,
-        transition: `width ${VOICE_PILL_GROW_TRANSITION}, height ${VOICE_PILL_GROW_TRANSITION}, padding-left ${VOICE_PILL_GROW_TRANSITION}, padding-right ${VOICE_PILL_GROW_TRANSITION}, background-color 220ms ease-out, border-color 220ms ease-out, box-shadow 220ms ease-out`,
+        opacity: resolvePillOpacity(state, ambientActive),
+        transition: `width ${VOICE_PILL_GROW_TRANSITION}, height ${VOICE_PILL_GROW_TRANSITION}, padding-left ${VOICE_PILL_GROW_TRANSITION}, padding-right ${VOICE_PILL_GROW_TRANSITION}, background-color 220ms ease-out, border-color 220ms ease-out, box-shadow 220ms ease-out, opacity 220ms ease-out`,
         ...style,
       }}
       data-horizontal-direction={horizontalDirection}
@@ -144,15 +189,29 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
             showExpandChevron ? "translate-y-1 scale-75 opacity-0" : "scale-100 opacity-100"
           )}
         >
-          <VoiceIdentityIcon
-            size={identitySize}
-            agentMode={agentMode}
-            className={cn(
-              "transition-[width,height] duration-200",
-              state === "idle" && "text-foreground",
-              (isUnavailable || isProcessing) && "animate-pulse"
-            )}
-          />
+          {agentMode ? (
+            <VoiceIdentityIcon
+              size={identitySize}
+              agentMode={agentMode}
+              className={cn(
+                "transition-[width,height] duration-200",
+                state === "idle" && "text-foreground",
+                (isUnavailable || isProcessing) && "animate-pulse"
+              )}
+            />
+          ) : (
+            <CatIdentity
+              state={CAT_STATE[state]}
+              getLevel={getAudioLevel}
+              size={identitySize}
+              // No pulse on processing: the cat animates that state itself.
+              className={cn(
+                "transition-[width,height] duration-200",
+                state === "idle" && "text-foreground",
+                isUnavailable && "animate-pulse"
+              )}
+            />
+          )}
         </span>
         <ChevronUp
           className={cn(
@@ -185,7 +244,9 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
       >
         <div
           className="absolute inset-0 flex items-center justify-center gap-0.75 transition-opacity duration-200 ease-out"
-          style={{ opacity: showCompactPill && waveformVisible && !isRecording ? 1 : 0 }}
+          style={{
+            opacity: showCompactPill && waveformVisible && !isRecording && !ambientActive ? 1 : 0,
+          }}
           aria-hidden="true"
         >
           {RESTING_WAVE_HEIGHTS.map((height, index) => (
@@ -198,10 +259,10 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
         </div>
         <PillWaveform
           getLevel={getAudioLevel}
-          active={isRecording}
+          active={waveformLive}
           className={cn(
             "absolute inset-0 transition-opacity duration-200 ease-out",
-            showCompactPill && waveformVisible && isRecording ? "opacity-100" : "opacity-0"
+            showCompactPill && waveformVisible && waveformLive ? "opacity-100" : "opacity-0"
           )}
         />
       </div>

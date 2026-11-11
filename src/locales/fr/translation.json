@@ -2811,9 +2811,24 @@
         "themeDescription": "Choisissez clair, sombre ou suivre le système",
         "title": "Apparence"
       },
+      "autoStop": {
+        "title": "Terminer au silence",
+        "enable": "Arrêter quand je cesse de parler",
+        "enableDescription": "Termine la dictée d'elle-même dès que vous vous taisez, puis transcrit et colle. Sans cela, un enregistrement continue jusqu'à ce que vous l'arrêtiez.",
+        "delay": "Silence avant de terminer",
+        "delayDescription": "Durée que doit atteindre la pause. Plus court vous coupe en pleine pensée ; plus long fait attendre chaque dictée.",
+        "seconds": "{{count}} secondes"
+      },
+      "muteHotkey": {
+        "title": "Maintenir pour couper le micro",
+        "description": "Tant que cette touche est maintenue, le microphone est libéré et les barres de l'icône se figent. Le relâchement reprend l'écoute. Nécessite une touche dont macOS signale le relâchement.",
+        "needsHoldCapableKey": "Cette touche ne peut pas être maintenue : macOS ne signale jamais son relâchement. Utilisez Globe/Fn, un modificateur de droite, un bouton latéral de souris ou une combinaison comme Option+Espace."
+      },
       "floatingIcon": {
         "autoHide": "Masquer automatiquement au repos",
         "autoHideDescription": "Garder l'icône masquée jusqu'au début de la dictée",
+        "ambientIndicator": "Afficher quand de la parole est détectée",
+        "ambientIndicatorDescription": "Garde le microphone ouvert pour que l'icône s'illumine lorsque vous parlez. La parole démarre aussi d'elle-même une dictée qui est transcrite et collée — utilisez la touche de sourdine si vous ne le souhaitez pas.",
         "startPosition": "Position de départ",
         "startPositionDescription": "Emplacement du panneau d'enregistrement vocal à l'écran",
         "bottomRight": "En bas à droite",
