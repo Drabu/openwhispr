@@ -2068,7 +2068,12 @@
         "startMode": "开始听写的方式",
         "startModeDescription": "说话会自动开始，或者保持指示灯活跃而由你自己开始。",
         "startSpeech": "说话",
-        "startHotkey": "按下快捷键"
+        "startHotkey": "按下快捷键",
+        "noiseProfile": "周围环境",
+        "noiseProfileDescription": "周围有多吵。你的声音必须高出环境这么多，这样邻桌的交谈才不会触发听写。",
+        "noiseQuiet": "安静的房间",
+        "noiseNormal": "普通",
+        "noiseNoisy": "嘈杂的场所"
       },
       "muteHotkey": {
         "title": "静音键",
@@ -2142,6 +2147,8 @@
         "title": "剪贴板",
         "autoPaste": "自动粘贴",
         "autoPasteDescription": "听写结束后自动将转录文本粘贴到当前活动的应用中",
+        "pressEnter": "粘贴后按回车",
+        "pressEnterDescription": "文本落入后发送回车，从而在聊天框或搜索框中提交。启用期间不会从修改中学习，因为输入框已经不在了。",
         "keepInClipboard": "将转录内容保留在剪贴板",
         "keepInClipboardDescription": "将听写文本保留在剪贴板中，以便在需要时手动粘贴"
       },

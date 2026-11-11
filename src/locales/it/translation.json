@@ -2068,7 +2068,12 @@
         "startMode": "Avviare una dettatura con",
         "startModeDescription": "Parlare la avvia automaticamente, oppure l'indicatore resta attivo e la avvii tu.",
         "startSpeech": "La voce",
-        "startHotkey": "Premere la scorciatoia"
+        "startHotkey": "Premere la scorciatoia",
+        "noiseProfile": "Ambiente",
+        "noiseProfileDescription": "Quanto è rumoroso l'ambiente intorno a te. La tua voce deve superare la stanza di tanto, ed è questo che impedisce a una conversazione al tavolo accanto di avviare una dettatura.",
+        "noiseQuiet": "Stanza silenziosa",
+        "noiseNormal": "Normale",
+        "noiseNoisy": "Luogo rumoroso"
       },
       "muteHotkey": {
         "title": "Tasto di silenziamento",
@@ -2142,6 +2147,8 @@
         "title": "Appunti",
         "autoPaste": "Incollaggio automatico",
         "autoPasteDescription": "Incolla automaticamente il testo trascritto nell'app attiva al termine della dettatura",
+        "pressEnter": "Premere Invio dopo aver incollato",
+        "pressEnterDescription": "Invia Invio appena il testo è stato incollato, inviandolo in una chat o in un campo di ricerca. L'apprendimento delle correzioni viene saltato finché questa opzione è attiva, perché il campo non c'è più.",
         "keepInClipboard": "Mantieni la trascrizione negli appunti",
         "keepInClipboardDescription": "Mantieni il testo dettato negli appunti per poterlo incollare manualmente se necessario"
       },

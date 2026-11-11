@@ -25,7 +25,8 @@ import {
 import {
   AMBIENT_HOLD_SECONDS,
   AMBIENT_MAX_RECORDING_MS,
-  AUTO_STOP_SPEECH_RMS,
+  ambientNoiseFloor,
+  ambientSpeechThreshold,
   clampAutoStopSilenceMs,
   createAmbientLevelGateState,
   isAmbientHearing,
@@ -816,6 +817,7 @@ class AudioManager {
     this._ambientLevelData = null;
     this._ambientStarting = null;
     this._ambientForcedHold = false;
+    this._ambientNoiseFloor = 0;
     this._streamingCommitActive = false;
     this._previewFlushResolve = null;
     this._batchSegments = [];
@@ -2108,7 +2110,8 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
   // immediately; and fired once, so a late window can't request a second stop.
   _evaluateSilenceAutoStop(gate, rms) {
     if (!gate || !this.isRecording || this._autoStopFired) return;
-    const { autoStopOnSilence, autoStopSilenceMs, ambientCommitMode } = getSettings();
+    const { autoStopOnSilence, autoStopSilenceMs, ambientCommitMode, ambientNoiseProfile } =
+      getSettings();
 
     // Commit-on-hotkey: the user ends the recording, so the silence timer is
     // off. Only the runaway backstop still applies.
@@ -2128,7 +2131,10 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     // Smoothed so one quiet frame between syllables doesn't read as a pause.
     this._autoStopRms = this._autoStopRms * 0.6 + rms * 0.4;
     const now = Date.now();
-    if (this._autoStopRms >= AUTO_STOP_SPEECH_RMS) {
+    // Relative to the room, not absolute: cafe babble clears any fixed bar
+    // continuously, so a timer hung off one never ages and the recording runs
+    // until the backstop.
+    if (this._autoStopRms >= ambientSpeechThreshold(this._ambientNoiseFloor, ambientNoiseProfile)) {
       this._heardSpeechThisRecording = true;
       this._lastSpeechAtMs = now;
       return;
@@ -2249,13 +2255,16 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
         this._ambientCtx = ctx;
         this._ambientAnalyser = analyser;
         this._ambientSource = source;
-        this._ambientGateState = createAmbientLevelGateState();
+        this._ambientGateState = createAmbientLevelGateState(this._ambientNoiseFloor);
         this._ambientLevelData = new Uint8Array(analyser.fftSize);
 
         this._ambientInterval = setInterval(() => {
           const rms = this._readAmbientRms();
           if (rms === null) return;
-          recordAmbientWindow(this._ambientGateState, rms);
+          recordAmbientWindow(this._ambientGateState, rms, getSettings().ambientNoiseProfile);
+          // Survives the gate state, which a starting dictation tears down: the
+          // recording's own silence timer needs the floor the room had.
+          this._ambientNoiseFloor = ambientNoiseFloor(this._ambientGateState);
         }, 100);
         return true;
       } catch (error) {

@@ -2825,7 +2825,12 @@
         "startMode": "Démarrer une dictée par",
         "startModeDescription": "Parler la démarre automatiquement, ou l'indicateur reste actif et vous la démarrez vous-même.",
         "startSpeech": "La parole",
-        "startHotkey": "Appui sur le raccourci"
+        "startHotkey": "Appui sur le raccourci",
+        "noiseProfile": "Environnement",
+        "noiseProfileDescription": "Le niveau de bruit autour de vous. Votre voix doit dépasser la pièce d'autant, ce qui empêche une conversation à la table voisine de démarrer une dictée.",
+        "noiseQuiet": "Pièce calme",
+        "noiseNormal": "Normal",
+        "noiseNoisy": "Lieu bruyant"
       },
       "muteHotkey": {
         "title": "Touche de sourdine",
@@ -2899,6 +2904,8 @@
         "title": "Presse-papiers",
         "autoPaste": "Collage automatique",
         "autoPasteDescription": "Coller automatiquement le texte transcrit dans l'application active à la fin de la dictée",
+        "pressEnter": "Appuyer sur Entrée après le collage",
+        "pressEnterDescription": "Envoie Entrée dès que le texte est collé, ce qui le valide dans une zone de chat ou un champ de recherche. L'apprentissage des corrections est ignoré tant que cette option est active, car le champ a déjà disparu.",
         "keepInClipboard": "Garder la transcription dans le presse-papiers",
         "keepInClipboardDescription": "Conserver le texte dicté dans le presse-papiers pour pouvoir le coller manuellement si nécessaire"
       },

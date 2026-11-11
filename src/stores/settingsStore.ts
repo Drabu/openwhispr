@@ -6,7 +6,14 @@ import { API_ENDPOINTS } from "../config/constants";
 import i18n, { normalizeUiLanguage } from "../i18n";
 import { ensureAgentNameInDictionary } from "../utils/agentName";
 import { chooseDictionaryStartupAction } from "../helpers/dictionaryStartup";
-import { AUTO_STOP_SILENCE_MS_DEFAULT, clampAutoStopSilenceMs } from "../helpers/ambientLevelGate";
+import {
+  AMBIENT_NOISE_PROFILE_DEFAULT,
+  AMBIENT_NOISE_PROFILES,
+  AUTO_STOP_SILENCE_MS_DEFAULT,
+  clampAutoStopSilenceMs,
+} from "../helpers/ambientLevelGate";
+
+export type AmbientNoiseProfileName = "quiet" | "normal" | "noisy";
 import logger from "../utils/logger";
 import whisperVadConstants from "../constants/whisperVad.json";
 import type {
@@ -474,6 +481,7 @@ const BOOLEAN_SETTINGS = new Set([
   "isSignedIn",
   "autoPasteEnabled",
   "keepTranscriptionInClipboard",
+  "pressEnterAfterPaste",
   "dataRetentionEnabled",
   "saveDiscardedTranscriptions",
   "noteFilesEnabled",
@@ -1095,6 +1103,9 @@ export interface SettingsState
   /** How a speech-started dictation ends: silence timer, or your keypress. */
   ambientCommitMode: "silence" | "hotkey";
   setAmbientCommitMode: (mode: "silence" | "hotkey") => void;
+  /** How far over the room's noise floor a voice must sit to count as yours. */
+  ambientNoiseProfile: AmbientNoiseProfileName;
+  setAmbientNoiseProfile: (profile: AmbientNoiseProfileName) => void;
   /** How long the silence must last before the recording finishes itself. */
   autoStopSilenceMs: number;
   startMinimized: boolean;
@@ -1126,6 +1137,8 @@ export interface SettingsState
   showTranscriptionPreview: boolean;
   autoPasteEnabled: boolean;
   keepTranscriptionInClipboard: boolean;
+  /** Sends Return once the transcript has landed, to submit the field it went into. */
+  pressEnterAfterPaste: boolean;
   noteFilesEnabled: boolean;
   noteFilesPath: string;
 
@@ -1466,6 +1479,7 @@ export interface SettingsState
   setShowTranscriptionPreview: (value: boolean) => void;
   setAutoPasteEnabled: (value: boolean) => void;
   setKeepTranscriptionInClipboard: (value: boolean) => void;
+  setPressEnterAfterPaste: (value: boolean) => void;
   setNoteFilesEnabled: (value: boolean) => void;
   setNoteFilesPath: (value: string) => void;
   setIsSignedIn: (value: boolean) => void;
@@ -1871,6 +1885,12 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   ambientCommitMode: (readString("ambientCommitMode", "silence") === "hotkey"
     ? "hotkey"
     : "silence") as "silence" | "hotkey",
+  ambientNoiseProfile: (Object.hasOwn(
+    AMBIENT_NOISE_PROFILES,
+    readString("ambientNoiseProfile", AMBIENT_NOISE_PROFILE_DEFAULT)
+  )
+    ? readString("ambientNoiseProfile", AMBIENT_NOISE_PROFILE_DEFAULT)
+    : AMBIENT_NOISE_PROFILE_DEFAULT) as AmbientNoiseProfileName,
   autoStopSilenceMs: clampAutoStopSilenceMs(
     readNumber("autoStopSilenceMs", AUTO_STOP_SILENCE_MS_DEFAULT)
   ),
@@ -1945,6 +1965,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   showTranscriptionPreview: readBoolean("showTranscriptionPreview", false),
   autoPasteEnabled: readBoolean("autoPasteEnabled", true),
   keepTranscriptionInClipboard: readBoolean("keepTranscriptionInClipboard", false),
+  pressEnterAfterPaste: readBoolean("pressEnterAfterPaste", false),
   noteFilesEnabled: readBoolean("noteFilesEnabled", false),
   noteFilesPath: readString("noteFilesPath", ""),
   isSignedIn: readBoolean("isSignedIn", false),
@@ -2715,6 +2736,10 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (isBrowser) localStorage.setItem("ambientStartMode", mode);
     set({ ambientStartMode: mode });
   },
+  setAmbientNoiseProfile: (profile: AmbientNoiseProfileName) => {
+    if (isBrowser) localStorage.setItem("ambientNoiseProfile", profile);
+    set({ ambientNoiseProfile: profile });
+  },
   setAmbientCommitMode: (mode: "silence" | "hotkey") => {
     if (isBrowser) localStorage.setItem("ambientCommitMode", mode);
     set({ ambientCommitMode: mode });
@@ -2867,6 +2892,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setShowTranscriptionPreview: createBooleanSetter("showTranscriptionPreview"),
   setAutoPasteEnabled: createBooleanSetter("autoPasteEnabled"),
   setKeepTranscriptionInClipboard: createBooleanSetter("keepTranscriptionInClipboard"),
+  setPressEnterAfterPaste: createBooleanSetter("pressEnterAfterPaste"),
   setNoteFilesEnabled: createBooleanSetter("noteFilesEnabled"),
   setNoteFilesPath: createStringSetter("noteFilesPath"),
 

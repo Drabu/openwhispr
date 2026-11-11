@@ -2047,7 +2047,12 @@
         "startMode": "Iniciar um ditado com",
         "startModeDescription": "Falar inicia automaticamente, ou mantenha o indicador ativo e inicie você mesmo.",
         "startSpeech": "Falar",
-        "startHotkey": "Pressionar o atalho"
+        "startHotkey": "Pressionar o atalho",
+        "noiseProfile": "Ambiente",
+        "noiseProfileDescription": "O quanto é ruidoso ao seu redor. Sua voz precisa se destacar isso acima da sala, o que impede que uma conversa na mesa ao lado inicie um ditado.",
+        "noiseQuiet": "Sala silenciosa",
+        "noiseNormal": "Normal",
+        "noiseNoisy": "Lugar ruidoso"
       },
       "muteHotkey": {
         "title": "Tecla de silenciar",
@@ -2121,6 +2126,8 @@
         "title": "Área de transferência",
         "autoPaste": "Colagem automática",
         "autoPasteDescription": "Colar automaticamente o texto transcrito no aplicativo ativo ao finalizar o ditado",
+        "pressEnter": "Pressionar Enter após colar",
+        "pressEnterDescription": "Envia Return depois de o texto ser colado, enviando-o num chat ou campo de busca. O aprendizado de correções é ignorado enquanto isto estiver ativo, porque o campo já não existe.",
         "keepInClipboard": "Manter transcrição na área de transferência",
         "keepInClipboardDescription": "Manter o texto ditado na área de transferência para poder colar manualmente se necessário"
       },

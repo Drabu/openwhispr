@@ -1246,6 +1246,8 @@ export default function SettingsPage({
     autoPasteEnabled,
     setAutoPasteEnabled,
     keepTranscriptionInClipboard,
+    pressEnterAfterPaste,
+    setPressEnterAfterPaste,
     setKeepTranscriptionInClipboard,
     floatingIconAutoHide,
     setFloatingIconAutoHide,
@@ -1257,6 +1259,8 @@ export default function SettingsPage({
     setAmbientStartMode,
     ambientCommitMode,
     setAmbientCommitMode,
+    ambientNoiseProfile,
+    setAmbientNoiseProfile,
     autoStopSilenceMs,
     setAutoStopSilenceMs,
     startMinimized,
@@ -3334,6 +3338,35 @@ export default function SettingsPage({
                 </SettingsPanelRow>
                 <SettingsPanelRow>
                   <SettingsRow
+                    label={t("settingsPage.general.autoStop.noiseProfile")}
+                    description={t("settingsPage.general.autoStop.noiseProfileDescription")}
+                  >
+                    <Select
+                      value={ambientNoiseProfile}
+                      onValueChange={(value) =>
+                        setAmbientNoiseProfile(value as "quiet" | "normal" | "noisy")
+                      }
+                      disabled={ambientStartMode !== "speech"}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="quiet">
+                          {t("settingsPage.general.autoStop.noiseQuiet")}
+                        </SelectItem>
+                        <SelectItem value="normal">
+                          {t("settingsPage.general.autoStop.noiseNormal")}
+                        </SelectItem>
+                        <SelectItem value="noisy">
+                          {t("settingsPage.general.autoStop.noiseNoisy")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
                     label={t("settingsPage.general.autoStop.commitMode")}
                     description={t("settingsPage.general.autoStop.commitModeDescription")}
                   >
@@ -3399,6 +3432,18 @@ export default function SettingsPage({
                     description={t("settingsPage.general.clipboard.autoPasteDescription")}
                   >
                     <Toggle checked={autoPasteEnabled} onChange={setAutoPasteEnabled} />
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.clipboard.pressEnter")}
+                    description={t("settingsPage.general.clipboard.pressEnterDescription")}
+                  >
+                    <Toggle
+                      checked={pressEnterAfterPaste}
+                      onChange={setPressEnterAfterPaste}
+                      disabled={!autoPasteEnabled}
+                    />
                   </SettingsRow>
                 </SettingsPanelRow>
                 <SettingsPanelRow>

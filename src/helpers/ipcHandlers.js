@@ -3761,7 +3761,7 @@ class IPCHandlers {
       }
 
       // A raw paste lands exactly as given: no smart space, and no AutoLearn watching edits.
-      const { raw, ...pasteOptions } = options ?? {};
+      const { raw, pressEnter, ...pasteOptions } = options ?? {};
 
       const mainWindow = this.windowManager?.mainWindow;
       const targetPid = this.textEditMonitor?.lastTargetPid || null;
@@ -3833,13 +3833,29 @@ class IPCHandlers {
         };
       }
       const pasted = pasteResult?.pasted !== false;
+
+      // Only when the text actually reached an application: on the clipboard-only
+      // fallback there is nothing in the field to submit, and a bare Return would
+      // send whatever was already there.
+      if (pressEnter === true && pasted) {
+        await this.clipboardManager.pressEnter();
+      }
+
       debugLogger.debug("[AutoLearn] Paste completed", {
         autoLearnEnabled: this._autoLearnEnabled,
         hasMonitor: !!this.textEditMonitor,
         targetPid,
         pasted,
       });
-      if (raw !== true && pasted && this.textEditMonitor && this._autoLearnEnabled) {
+      // Submitting the field ends the edit AutoLearn exists to watch, and leaves
+      // it diffing against a box the app has already cleared.
+      if (
+        raw !== true &&
+        pasted &&
+        pressEnter !== true &&
+        this.textEditMonitor &&
+        this._autoLearnEnabled
+      ) {
         setTimeout(() => {
           try {
             debugLogger.debug("[AutoLearn] Starting monitoring", {

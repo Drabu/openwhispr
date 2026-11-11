@@ -2818,7 +2818,12 @@
         "startMode": "Diktat starten durch",
         "startModeDescription": "Sprechen startet es automatisch, oder die Anzeige bleibt aktiv und Sie starten selbst.",
         "startSpeech": "Sprechen",
-        "startHotkey": "Tastenkürzel drücken"
+        "startHotkey": "Tastenkürzel drücken",
+        "noiseProfile": "Umgebung",
+        "noiseProfileDescription": "Wie laut es um Sie herum ist. Ihre Stimme muss sich so weit vom Raum abheben — das verhindert, dass ein Gespräch am Nebentisch ein Diktat startet.",
+        "noiseQuiet": "Ruhiger Raum",
+        "noiseNormal": "Normal",
+        "noiseNoisy": "Laute Umgebung"
       },
       "muteHotkey": {
         "title": "Stummschalttaste",
@@ -2892,6 +2897,8 @@
         "title": "Zwischenablage",
         "autoPaste": "Automatisches Einfügen",
         "autoPasteDescription": "Transkribierten Text nach dem Diktieren automatisch in die aktive App einfügen",
+        "pressEnter": "Nach dem Einfügen Enter drücken",
+        "pressEnterDescription": "Sendet Return, sobald der Text eingefügt wurde, und schickt ihn damit in einem Chatfeld oder Suchfeld ab. Das Lernen von Korrekturen entfällt, solange dies aktiv ist, weil das Feld schon weg ist.",
         "keepInClipboard": "Transkription in der Zwischenablage behalten",
         "keepInClipboardDescription": "Diktierten Text in der Zwischenablage behalten, damit Sie ihn bei Bedarf manuell einfügen können"
       },

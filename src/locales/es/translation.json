@@ -2120,7 +2120,12 @@
         "startMode": "Iniciar un dictado con",
         "startModeDescription": "Hablar lo inicia automáticamente, o mantén el indicador activo e inícialo tú.",
         "startSpeech": "Hablar",
-        "startHotkey": "Pulsar el atajo"
+        "startHotkey": "Pulsar el atajo",
+        "noiseProfile": "Entorno",
+        "noiseProfileDescription": "Qué tan ruidoso es tu entorno. Tu voz debe destacar esto por encima de la sala, que es lo que evita que una conversación en la mesa de al lado inicie un dictado.",
+        "noiseQuiet": "Sala silenciosa",
+        "noiseNormal": "Normal",
+        "noiseNoisy": "Lugar ruidoso"
       },
       "muteHotkey": {
         "title": "Tecla de silencio",
@@ -2194,6 +2199,8 @@
         "title": "Portapapeles",
         "autoPaste": "Pegado automático",
         "autoPasteDescription": "Pegar automáticamente el texto transcrito en la aplicación activa al finalizar el dictado",
+        "pressEnter": "Pulsar Enter después de pegar",
+        "pressEnterDescription": "Envía Return una vez pegado el texto, lo que lo envía en un chat o un campo de búsqueda. El aprendizaje de correcciones se omite mientras esto está activo, porque el campo ya no está.",
         "keepInClipboard": "Mantener transcripción en el portapapeles",
         "keepInClipboardDescription": "Mantener el texto dictado en el portapapeles para poder pegarlo manualmente si es necesario"
       },

@@ -5,6 +5,30 @@ if !AXIsProcessTrusted() {
     exit(2)
 }
 
+// `--return` posts a bare Return and exits, for the setting that submits the
+// field the transcript just landed in. Handled before any pasteboard work so it
+// shares only the Accessibility grant and the event tap with the paste, which is
+// the point: osascript's System Events route needs a separate Automation grant
+// and posts to whatever is frontmost by then. Return is a fixed virtual key, so
+// none of the layout lookup below applies.
+if CommandLine.arguments.contains("--return") {
+    guard let down = CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(kVK_Return), keyDown: true),
+          let up = CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(kVK_Return), keyDown: false) else {
+        exit(1)
+    }
+    // Cleared, not left unset: a posted event carries the modifier state in
+    // force when it was created, so a plain Return arrives as ⌃↩ or ⌘↩ and the
+    // app treats it as a different shortcut — newline instead of send, in every
+    // chat box. ⌘V below sets its flags for the same reason, which is why the
+    // paste was never affected.
+    down.flags = []
+    up.flags = []
+    down.post(tap: .cgSessionEventTap)
+    usleep(8000)
+    up.post(tap: .cgSessionEventTap)
+    exit(0)
+}
+
 // Selection capture sends ⌘C and reports which app received it, so the caller
 // can tell a copied selection from a target that changed underneath it. With no
 // arguments this stays what the paste path expects: ⌘V, no output.

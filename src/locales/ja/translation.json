@@ -2068,7 +2068,12 @@
         "startMode": "口述を始める方法",
         "startModeDescription": "話すと自動的に始まります。または表示だけ有効にして自分で始めます。",
         "startSpeech": "話す",
-        "startHotkey": "ホットキーを押す"
+        "startHotkey": "ホットキーを押す",
+        "noiseProfile": "周囲の環境",
+        "noiseProfileDescription": "周囲がどれくらい騒がしいか。自分の声がこの分だけ環境音より大きい必要があり、これが隣の席の会話で口述が始まるのを防ぎます。",
+        "noiseQuiet": "静かな場所",
+        "noiseNormal": "標準",
+        "noiseNoisy": "騒がしい場所"
       },
       "muteHotkey": {
         "title": "ミュートキー",
@@ -2142,6 +2147,8 @@
         "title": "クリップボード",
         "autoPaste": "自動貼り付け",
         "autoPasteDescription": "ディクテーション完了後、文字起こしテキストをアクティブなアプリに自動的に貼り付けます",
+        "pressEnter": "貼り付け後に Enter を押す",
+        "pressEnterDescription": "テキストが貼り付けられたら Return を送信し、チャット欄や検索欄で送信します。これが有効な間は入力欄が残らないため、修正からの学習は行われません。",
         "keepInClipboard": "文字起こしをクリップボードに保持",
         "keepInClipboardDescription": "必要に応じて手動で貼り付けできるよう、音声入力テキストをクリップボードに保持します"
       },

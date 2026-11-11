@@ -41,6 +41,12 @@ const PASTE_SESSION_TYPE = "com.openwhispr.paste-session";
 const PASTE_POSTED = /^PASTE_POSTED( typed)?$/m;
 const PASTE_READ_VERDICT = /^PASTE_(?:READ \d+|NOT_READ|REPLACED|TYPED)$/m;
 
+// Enough for the target to have handled the paste chord before Return lands on
+// top of it. Overshooting only delays the submit; undershooting submits an
+// empty field, so this is deliberately not tuned to the fastest case.
+const ENTER_AFTER_PASTE_DELAY_MS = 150;
+const ENTER_TIMEOUT_MS = 3000;
+
 const RESTORE_DELAYS = {
   // macOS restores just after the target reads the transcript, but never sooner
   // than `darwin` after ⌘V, so an early reader (a clipboard manager ignoring the
@@ -1169,6 +1175,120 @@ class ClipboardManager {
       });
       throw error;
     }
+  }
+
+  // Tools that can post a bare Return here, best first; empty when none can.
+  _enterKeyCommands() {
+    if (process.platform === "darwin") {
+      // The fast-paste binary first: it posts a CGEvent under the same
+      // Accessibility grant as the working paste. osascript drives System
+      // Events instead, which needs its own Automation grant and is kept only
+      // as a fallback for builds without the compiled helper.
+      const fastPaste = this.resolveFastPasteBinary();
+      return [
+        ...(fastPaste ? [{ cmd: fastPaste, args: ["--return"] }] : []),
+        { cmd: "osascript", args: ["-e", 'tell application "System Events" to key code 36'] },
+      ];
+    }
+
+    if (process.platform === "win32") {
+      const nircmdPath = this.getNircmdPath();
+      return [
+        ...(nircmdPath
+          ? [
+              {
+                cmd: nircmdPath,
+                args: ["sendkeypress", "enter"],
+                spawnOptions: { windowsHide: true },
+              },
+            ]
+          : []),
+        {
+          cmd: "powershell.exe",
+          args: [
+            "-NoProfile",
+            "-NonInteractive",
+            "-WindowStyle",
+            "Hidden",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            "[void][System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms');[System.Windows.Forms.SendKeys]::SendWait('{ENTER}')",
+          ],
+          spawnOptions: { windowsHide: true },
+        },
+      ];
+    }
+
+    // Same tools and the same ordering as the paste chord: xdotool is native on
+    // X11, but on Wayland it exits 0 without the focused window ever seeing the
+    // key, so uinput goes first there. KEY_ENTER is 28.
+    const legacy = this._isYdotoolLegacy();
+    const ydotool = { cmd: "ydotool", args: legacy ? ["key", "Return"] : ["key", "28:1", "28:0"] };
+    const xdotool = { cmd: "xdotool", args: ["key", "Return"] };
+    const wtype = { cmd: "wtype", args: ["-k", "Return"] };
+    const candidates = this._isWayland() ? [ydotool, wtype, xdotool] : [xdotool, ydotool];
+    return candidates.filter((candidate) => this.commandExists(candidate.cmd));
+  }
+
+  // Submits whatever the transcript just landed in. Posted separately after the
+  // paste rather than folded into it: the fast-paste binaries only know the
+  // paste chord, and a Return built into them would be sent even on the paths
+  // where the paste itself was refused.
+  async pressEnter() {
+    const commands = this._enterKeyCommands();
+    if (commands.length === 0) {
+      debugLogger.warn(
+        "Cannot press Enter after pasting: no keystroke tool available",
+        { platform: process.platform },
+        "clipboard"
+      );
+      return false;
+    }
+
+    // The paste chord is posted, not awaited by the target, so Enter sent in the
+    // same tick can arrive before the text and submit an empty field.
+    await new Promise((resolve) => setTimeout(resolve, ENTER_AFTER_PASTE_DELAY_MS));
+
+    for (const command of commands) {
+      if (await this._postEnterWith(command)) return true;
+    }
+    return false;
+  }
+
+  _postEnterWith(command) {
+    return new Promise((resolve) => {
+      const child = spawn(command.cmd, command.args, command.spawnOptions ?? {});
+      let stderr = "";
+      let settled = false;
+      const finish = (ok, detail) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        child.removeAllListeners();
+        // Reported either way: a refused keystroke is silent at the target, and
+        // the tool's own stderr is the only thing that names the cause (an
+        // Automation denial reads "Not authorized to send Apple events").
+        const report = ok ? debugLogger.info : debugLogger.warn;
+        report.call(
+          debugLogger,
+          ok ? "Enter keystroke posted" : "Enter keystroke failed",
+          { ...detail, stderr: stderr.trim() || undefined },
+          "clipboard"
+        );
+        resolve(ok);
+      };
+
+      child.stderr?.on("data", (data) => {
+        stderr += data.toString();
+      });
+      child.on("close", (code) => finish(code === 0, { tool: command.cmd, code }));
+      child.on("error", (error) => finish(false, { tool: command.cmd, error: error.message }));
+      const timeoutId = setTimeout(() => {
+        killProcess(child, "SIGKILL");
+        finish(false, { tool: command.cmd, reason: "timeout" });
+      }, ENTER_TIMEOUT_MS);
+    });
   }
 
   async pasteMacOS(originalClipboard, options = {}) {

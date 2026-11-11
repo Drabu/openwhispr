@@ -851,7 +851,8 @@ export const useAudioRecording = (toast, options = {}) => {
           }
 
           const isStreaming = result.source?.includes("streaming");
-          const { autoPasteEnabled, keepTranscriptionInClipboard } = getSettings();
+          const { autoPasteEnabled, keepTranscriptionInClipboard, pressEnterAfterPaste } =
+            getSettings();
 
           const persistencePromise = audioManagerRef.current
             .saveTranscription(result.text, result.rawText ?? result.text, {
@@ -912,6 +913,7 @@ export const useAudioRecording = (toast, options = {}) => {
           const pasteOptions = {
             restoreClipboard: !keepTranscriptionInClipboard,
             allowClipboardFallback: isAccessibilitySkipped(),
+            pressEnter: pressEnterAfterPaste,
           };
 
           const whilePasting = async (attempt) => {

@@ -2068,7 +2068,12 @@
         "startMode": "開始聽寫的方式",
         "startModeDescription": "說話會自動開始，或者保持指示燈活躍而由你自己開始。",
         "startSpeech": "說話",
-        "startHotkey": "按下快速鍵"
+        "startHotkey": "按下快速鍵",
+        "noiseProfile": "周圍環境",
+        "noiseProfileDescription": "周圍有多吵。你的聲音必須高出環境這麼多，這樣鄰桌的交談才不會觸發聽寫。",
+        "noiseQuiet": "安靜的房間",
+        "noiseNormal": "普通",
+        "noiseNoisy": "嘈雜的場所"
       },
       "muteHotkey": {
         "title": "靜音鍵",
@@ -2142,6 +2147,8 @@
         "title": "剪貼簿",
         "autoPaste": "自動貼上",
         "autoPasteDescription": "聽寫結束後自動將轉錄文字貼上到目前使用中的應用程式",
+        "pressEnter": "貼上後按下 Enter",
+        "pressEnterDescription": "文字落入後送出 Enter，從而在聊天框或搜尋框中送出。啟用期間不會從修改中學習，因為輸入框已經不在了。",
         "keepInClipboard": "將轉錄內容保留在剪貼簿",
         "keepInClipboardDescription": "將語音輸入的文字保留在剪貼簿中，以便在需要時手動貼上"
       },
