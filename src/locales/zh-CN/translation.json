@@ -2305,6 +2305,12 @@
       "translationHotkey": {
         "title": "翻译快捷键",
         "description": "用任何语言听写——粘贴的文本会自动翻译"
+      },
+      "identity": {
+        "style": "胶囊角色",
+        "styleDescription": "由哪种图形在悬浮胶囊上显示语音状态。",
+        "styleCat": "猫（手绘）",
+        "styleLottie": "动画文件"
       }
     },
     "permissions": {

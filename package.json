@@ -10,6 +10,7 @@
   "scripts": {
     "compile:globe": "node scripts/build-globe-listener.js",
     "compile:fast-paste": "node scripts/build-macos-fast-paste.js",
+    "build:placeholder-identity": "node scripts/build-placeholder-identity-lottie.js",
     "compile:winkeys": "node scripts/build-windows-key-listener.js",
     "compile:linuxkeys": "node scripts/build-linux-key-listener.js",
     "compile:text-monitor": "node scripts/build-text-monitor.js",
@@ -141,6 +142,7 @@
     "@fontsource-variable/caveat": "^5.3.0",
     "@fontsource-variable/inter": "^5.3.0",
     "@homebridge/dbus-native": "^0.7.9",
+    "@lottiefiles/dotlottie-web": "^0.83.0",
     "@napi-rs/keyring": "^1.3.0",
     "@qdrant/js-client-rest": "^1.12.0",
     "@radix-ui/react-accordion": "^1.1.2",

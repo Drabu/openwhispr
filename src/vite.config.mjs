@@ -46,6 +46,8 @@ export default defineConfig(({ mode }) => {
       },
     ],
     base: "./", // Use relative paths for file:// protocol in Electron
+    // .lottie is a zip, so it has to be copied as-is rather than parsed.
+    assetsInclude: ["**/*.lottie"],
     envDir, // Load .env from project root
     resolve: {
       alias: {
@@ -60,6 +62,11 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: "dist",
       assetsDir: "assets",
+      // Never inline .lottie. Under the 4kB default a small animation becomes a
+      // base64 data URI while a larger one emits a file, so the player would
+      // take a different path depending on the artwork's size — and the
+      // placeholder would prove nothing about the real export.
+      assetsInlineLimit: (filePath) => (filePath.endsWith(".lottie") ? false : undefined),
       rolldownOptions: {
         external: [
           "electron",

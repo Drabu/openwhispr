@@ -2305,6 +2305,12 @@
       "translationHotkey": {
         "title": "翻譯快捷鍵",
         "description": "用任何語言聽寫——貼上的文字會自動翻譯"
+      },
+      "identity": {
+        "style": "膠囊角色",
+        "styleDescription": "由哪種圖形在浮動膠囊上顯示語音狀態。",
+        "styleCat": "貓（手繪）",
+        "styleLottie": "動畫檔案"
       }
     },
     "permissions": {

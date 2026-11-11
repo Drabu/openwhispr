@@ -2357,6 +2357,12 @@
       "translationHotkey": {
         "title": "Atajo de Traducción",
         "description": "Dicta en cualquier idioma: el texto pegado sale traducido"
+      },
+      "identity": {
+        "style": "Personaje de la píldora",
+        "styleDescription": "Qué ilustración muestra los estados de voz en la píldora flotante.",
+        "styleCat": "Gato (dibujado)",
+        "styleLottie": "Archivo de animación"
       }
     },
     "permissions": {

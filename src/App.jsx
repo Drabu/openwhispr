@@ -68,6 +68,7 @@ export default function App() {
   // Floating icon auto-hide setting (read from store, synced via IPC)
   const floatingIconAutoHide = useSettingsStore((s) => s.floatingIconAutoHide);
   const panelStartPosition = useSettingsStore((s) => s.panelStartPosition);
+  const voiceIdentityStyle = useSettingsStore((s) => s.voiceIdentityStyle);
   const prevAutoHideRef = useRef(floatingIconAutoHide);
   const [voiceHorizontalDirection, setVoiceHorizontalDirection] = useState(() =>
     resolveVoiceHorizontalDirection(panelStartPosition)
@@ -555,6 +556,7 @@ export default function App() {
               isDragging={isDragging}
               horizontalDirection={voiceHorizontalDirection}
               ambientActive={ambientMonitorActive}
+              identityStyle={voiceIdentityStyle}
               submitDeadline={pendingSubmit?.deadline ?? null}
               submitDelayMs={pendingSubmit?.delayMs ?? 0}
               role={pillIsInteractive ? "button" : "status"}

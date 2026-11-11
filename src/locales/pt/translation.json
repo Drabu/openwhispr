@@ -2284,6 +2284,12 @@
       "translationHotkey": {
         "title": "Atalho de Tradução",
         "description": "Dite em qualquer idioma: o texto colado sai traduzido"
+      },
+      "identity": {
+        "style": "Personagem da pílula",
+        "styleDescription": "Qual ilustração mostra os estados de voz na pílula flutuante.",
+        "styleCat": "Gato (desenhado)",
+        "styleLottie": "Arquivo de animação"
       }
     },
     "permissions": {

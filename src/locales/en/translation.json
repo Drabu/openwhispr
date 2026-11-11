@@ -3055,6 +3055,12 @@
       "translationHotkey": {
         "title": "Translation Hotkey",
         "description": "Dictate in any language — the pasted text comes out translated"
+      },
+      "identity": {
+        "style": "Pill character",
+        "styleDescription": "Which artwork shows the voice states on the floating pill.",
+        "styleCat": "Cat (drawn)",
+        "styleLottie": "Animation file"
       }
     },
     "permissions": {

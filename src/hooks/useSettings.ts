@@ -425,6 +425,8 @@ function useSettingsInternal() {
     setAmbientCommitMode: store.setAmbientCommitMode,
     ambientNoiseProfile: store.ambientNoiseProfile,
     setAmbientNoiseProfile: store.setAmbientNoiseProfile,
+    voiceIdentityStyle: store.voiceIdentityStyle,
+    setVoiceIdentityStyle: store.setVoiceIdentityStyle,
     autoStopSilenceMs: store.autoStopSilenceMs,
     setAutoStopSilenceMs: store.setAutoStopSilenceMs,
     startMinimized: store.startMinimized,

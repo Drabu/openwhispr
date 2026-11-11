@@ -3062,6 +3062,12 @@
       "translationHotkey": {
         "title": "Raccourci de Traduction",
         "description": "Dictez dans n'importe quelle langue : le texte collé ressort traduit"
+      },
+      "identity": {
+        "style": "Personnage de la pastille",
+        "styleDescription": "Quelle illustration affiche les états vocaux sur la pastille flottante.",
+        "styleCat": "Chat (dessiné)",
+        "styleLottie": "Fichier d'animation"
       }
     },
     "permissions": {

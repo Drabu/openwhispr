@@ -3055,6 +3055,12 @@
       "translationHotkey": {
         "title": "Übersetzungs-Hotkey",
         "description": "Diktiere in beliebiger Sprache — der eingefügte Text kommt übersetzt heraus"
+      },
+      "identity": {
+        "style": "Pillen-Figur",
+        "styleDescription": "Welche Grafik die Sprachzustände auf der schwebenden Pille zeigt.",
+        "styleCat": "Katze (gezeichnet)",
+        "styleLottie": "Animationsdatei"
       }
     },
     "permissions": {

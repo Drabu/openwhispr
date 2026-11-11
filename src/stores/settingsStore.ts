@@ -16,6 +16,7 @@ import {
 import { clampPressEnterDelayMs } from "../helpers/submitGrace";
 
 export type AmbientNoiseProfileName = "quiet" | "normal" | "noisy";
+export type VoiceIdentityStyle = "cat" | "lottie";
 import logger from "../utils/logger";
 import whisperVadConstants from "../constants/whisperVad.json";
 import type {
@@ -1108,6 +1109,9 @@ export interface SettingsState
   /** How far over the room's noise floor a voice must sit to count as yours. */
   ambientNoiseProfile: AmbientNoiseProfileName;
   setAmbientNoiseProfile: (profile: AmbientNoiseProfileName) => void;
+  /** Which artwork carries the pill's voice states. */
+  voiceIdentityStyle: VoiceIdentityStyle;
+  setVoiceIdentityStyle: (style: VoiceIdentityStyle) => void;
   /** How long the silence must last before the recording finishes itself. */
   autoStopSilenceMs: number;
   startMinimized: boolean;
@@ -1893,6 +1897,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   ambientCommitMode: (readString("ambientCommitMode", "silence") === "hotkey"
     ? "hotkey"
     : "silence") as "silence" | "hotkey",
+  voiceIdentityStyle: (readString("voiceIdentityStyle", "cat") === "lottie"
+    ? "lottie"
+    : "cat") as VoiceIdentityStyle,
   ambientNoiseProfile: (Object.hasOwn(
     AMBIENT_NOISE_PROFILES,
     readString("ambientNoiseProfile", AMBIENT_NOISE_PROFILE_DEFAULT)
@@ -2747,6 +2754,10 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setAmbientStartMode: (mode: "speech" | "hotkey") => {
     if (isBrowser) localStorage.setItem("ambientStartMode", mode);
     set({ ambientStartMode: mode });
+  },
+  setVoiceIdentityStyle: (style: VoiceIdentityStyle) => {
+    if (isBrowser) localStorage.setItem("voiceIdentityStyle", style);
+    set({ voiceIdentityStyle: style });
   },
   setAmbientNoiseProfile: (profile: AmbientNoiseProfileName) => {
     if (isBrowser) localStorage.setItem("ambientNoiseProfile", profile);

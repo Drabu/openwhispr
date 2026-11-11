@@ -4,6 +4,7 @@ import { cn } from "../lib/utils";
 import { PillWaveform } from "./PillWaveform";
 import { VoiceIdentityIcon } from "./VoiceIdentityIcon";
 import { CatIdentity, type CatIdentityState } from "./CatIdentity";
+import { LottieIdentity } from "./LottieIdentity";
 import { RESTING_WAVE_SILHOUETTE, WAVEFORM_BAR_COUNT } from "./waveformMath";
 import {
   VOICE_PILL_FOOTPRINT,
@@ -39,6 +40,8 @@ interface VoicePillProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"
   horizontalDirection?: "left" | "right";
   /** Ambient mic monitor is running: the pill dims at rest and lifts on speech. */
   ambientActive?: boolean;
+  /** Which artwork carries the voice states: the drawn cat, or a .lottie. */
+  identityStyle?: "cat" | "lottie";
   /** When the pending Return fires, as an epoch ms; drives the countdown ring. */
   submitDeadline?: number | null;
   /** The grace period the ring is a fraction of. */
@@ -125,6 +128,7 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
     isDragging = false,
     horizontalDirection = "right",
     ambientActive = false,
+    identityStyle = "cat",
     submitDeadline = null,
     submitDelayMs = 0,
     className,
@@ -247,17 +251,23 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
               )}
             />
           ) : (
-            <CatIdentity
-              state={CAT_STATE[state]}
-              getLevel={getAudioLevel}
-              size={identitySize}
-              // No pulse on processing: the cat animates that state itself.
-              className={cn(
-                "transition-[width,height] duration-200",
-                state === "idle" && "text-foreground",
-                isUnavailable && "animate-pulse"
-              )}
-            />
+            (() => {
+              const Identity = identityStyle === "lottie" ? LottieIdentity : CatIdentity;
+              return (
+                <Identity
+                  state={CAT_STATE[state]}
+                  getLevel={getAudioLevel}
+                  size={identitySize}
+                  // No pulse on processing: both identities animate that state
+                  // themselves.
+                  className={cn(
+                    "transition-[width,height] duration-200",
+                    state === "idle" && "text-foreground",
+                    isUnavailable && "animate-pulse"
+                  )}
+                />
+              );
+            })()
           )}
         </span>
         <ChevronUp

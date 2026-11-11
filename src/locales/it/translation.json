@@ -2305,6 +2305,12 @@
       "translationHotkey": {
         "title": "Hotkey Traduzione",
         "description": "Detta in qualsiasi lingua: il testo incollato esce tradotto"
+      },
+      "identity": {
+        "style": "Personaggio della pillola",
+        "styleDescription": "Quale grafica mostra gli stati vocali sulla pillola flottante.",
+        "styleCat": "Gatto (disegnato)",
+        "styleLottie": "File di animazione"
       }
     },
     "permissions": {

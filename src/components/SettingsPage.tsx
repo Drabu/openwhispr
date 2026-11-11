@@ -1266,6 +1266,8 @@ export default function SettingsPage({
     setAmbientCommitMode,
     ambientNoiseProfile,
     setAmbientNoiseProfile,
+    voiceIdentityStyle,
+    setVoiceIdentityStyle,
     autoStopSilenceMs,
     setAutoStopSilenceMs,
     startMinimized,
@@ -3336,6 +3338,29 @@ export default function SettingsPage({
                         </SelectItem>
                         <SelectItem value="hotkey">
                           {t("settingsPage.general.autoStop.startHotkey")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.identity.style")}
+                    description={t("settingsPage.general.identity.styleDescription")}
+                  >
+                    <Select
+                      value={voiceIdentityStyle}
+                      onValueChange={(value) => setVoiceIdentityStyle(value as "cat" | "lottie")}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cat">
+                          {t("settingsPage.general.identity.styleCat")}
+                        </SelectItem>
+                        <SelectItem value="lottie">
+                          {t("settingsPage.general.identity.styleLottie")}
                         </SelectItem>
                       </SelectContent>
                     </Select>

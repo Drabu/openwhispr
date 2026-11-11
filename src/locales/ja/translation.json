@@ -2305,6 +2305,12 @@
       "translationHotkey": {
         "title": "翻訳ホットキー",
         "description": "どの言語で話しても、貼り付けられるテキストは翻訳済みになります"
+      },
+      "identity": {
+        "style": "ピルのキャラクター",
+        "styleDescription": "フローティングピルで音声の状態を示すアートワークを選びます。",
+        "styleCat": "猫（手描き）",
+        "styleLottie": "アニメーションファイル"
       }
     },
     "permissions": {

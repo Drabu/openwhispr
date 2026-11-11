@@ -5547,6 +5547,12 @@
       "translationHotkey": {
         "title": "مفتاح اختصار الترجمة",
         "description": "قم بالإملاء بأي لغة — يخرج النص الملصق مترجمًا"
+      },
+      "identity": {
+        "style": "شخصية الحبة",
+        "styleDescription": "أي رسم يعرض حالات الصوت على الحبة العائمة.",
+        "styleCat": "قط (مرسوم)",
+        "styleLottie": "ملف حركة"
       }
     },
     "permissions": {
