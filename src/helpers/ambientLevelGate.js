@@ -14,7 +14,9 @@ export const createAmbientLevelGateState = () => ({
 });
 
 // Exponential smoothing so one loud transient (a key press) can't trip the gate.
-const SMOOTHING = 0.6;
+// Kept low enough to still reject a single spike, but every point of inertia
+// here is speech lost before the recording starts.
+const SMOOTHING = 0.45;
 
 export const recordAmbientWindow = (state, rms) => {
   if (!state) return null;

@@ -1390,7 +1390,9 @@ export const useAudioRecording = (toast, options = {}) => {
     const interval = setInterval(() => {
       if (cancelled) return;
       setIsHearingAmbient(manager.isHearingAmbientSpeech());
-    }, 120);
+      // 60ms, not 120: this poll sits between hearing speech and starting the
+      // recording, and everything it costs is audio the transcript never sees.
+    }, 60);
 
     return () => {
       cancelled = true;
