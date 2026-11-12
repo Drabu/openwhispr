@@ -1,6 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import { cn } from "../lib/utils";
-import { resolveWaveformBarHeight, WAVEFORM_BAR_COUNT, WAVEFORM_BAR_MIN_PX } from "./waveformMath";
+import {
+  resolveWaveformBarHeight,
+  toBarLevel,
+  WAVEFORM_BAR_COUNT,
+  WAVEFORM_BAR_MIN_PX,
+} from "./waveformMath";
 
 interface PillWaveformProps {
   /** Returns the current input level (0..~1) or null when no signal source exists. */
@@ -15,6 +20,14 @@ interface PillWaveformProps {
 // lets adjacent bars straddle syllable onsets and gaps, so the real signal
 // itself supplies the bar-to-bar variance.
 const SAMPLE_INTERVAL_MS = 80;
+
+// The oldest sample sits at this opacity and the newest at 1, so the lane reads
+// left-to-right as a trail rather than as eleven equal sticks.
+const RECENCY_MIN = 0.3;
+const RECENCY_RANGE = 1 - RECENCY_MIN;
+// Peaks thicken. Only on the x axis: height already carries amplitude, and
+// scaling both would square the signal and swamp quiet speech.
+const PEAK_WIDTH_GAIN = 0.75;
 
 /**
  * Level-driven waveform: bars scroll right-to-left with the live input signal.
@@ -33,8 +46,13 @@ export function PillWaveform({ getLevel, active, className }: PillWaveformProps)
     // session's frozen wave.
     levelsRef.current = new Array(WAVEFORM_BAR_COUNT).fill(0);
     for (let index = 0; index < WAVEFORM_BAR_COUNT; index += 1) {
-      const height = `${WAVEFORM_BAR_MIN_PX}px`;
-      if (barRefs.current[index]) barRefs.current[index].style.height = height;
+      const bar = barRefs.current[index];
+      if (!bar) continue;
+      bar.style.height = `${WAVEFORM_BAR_MIN_PX}px`;
+      bar.style.transform = "scaleX(1)";
+      bar.style.opacity = String(
+        RECENCY_MIN + (RECENCY_RANGE * index * 0.6) / (WAVEFORM_BAR_COUNT - 1)
+      );
     }
 
     let frame = 0;
@@ -48,7 +66,16 @@ export function PillWaveform({ getLevel, active, className }: PillWaveformProps)
         levels.push(level === null ? 0 : level);
         for (let i = 0; i < levels.length; i++) {
           const bar = barRefs.current[i];
-          if (bar) bar.style.height = `${resolveWaveformBarHeight(levels[i])}px`;
+          if (!bar) continue;
+          bar.style.height = `${resolveWaveformBarHeight(levels[i])}px`;
+          // Everything below is the same measured sample read twice more, not
+          // decoration: age fades a bar as it scrolls away, and loudness
+          // thickens and brightens it. Height alone left eleven identical
+          // sticks with no sense of which end was now.
+          const age = i / (levels.length - 1);
+          const loud = toBarLevel(levels[i]);
+          bar.style.opacity = String(RECENCY_MIN + RECENCY_RANGE * age * (0.6 + 0.4 * loud));
+          bar.style.transform = `scaleX(${1 + loud * PEAK_WIDTH_GAIN})`;
         }
       }
       frame = requestAnimationFrame(paint);
@@ -68,7 +95,7 @@ export function PillWaveform({ getLevel, active, className }: PillWaveformProps)
           ref={(el) => {
             barRefs.current[i] = el;
           }}
-          className="w-0.5 rounded-full bg-current transition-[height] duration-75 ease-out motion-reduce:transition-none"
+          className="w-0.5 origin-center rounded-full bg-current transition-[height,transform,opacity] duration-75 ease-out motion-reduce:transition-none"
           style={{ height: WAVEFORM_BAR_MIN_PX }}
         />
       ))}

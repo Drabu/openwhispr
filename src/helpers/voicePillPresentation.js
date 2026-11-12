@@ -12,16 +12,62 @@ export { LIVE_TRANSCRIPT_SURFACE_LIMITS };
 // that changed with a setting would make the native window bounds depend on a
 // preference.
 export const VOICE_PILL_FOOTPRINT = Object.freeze({
-  idle: Object.freeze({ width: 54, height: 54 }),
-  // 112 = 6px edge inset + 36px icon + 6px gap + 52px waveform + 12px edge
+  idle: Object.freeze({ width: 86, height: 86 }),
+  // 144 = 6px edge inset + 68px icon + 6px gap + 52px waveform + 12px edge
   // inset (the waveform side keeps extra air; insets include the 1px border).
-  recording: Object.freeze({ width: 112, height: 50 }),
+  recording: Object.freeze({ width: 144, height: 82 }),
 });
 
 // The hover cancel control that emerges beside the pill (px). Same contract:
 // WINDOW_SIZES.RECORDING must fit pill + gap + cancel inside its dock insets,
-// or the control clips at the native window bounds.
+// or the control clips at the native window bounds. Deliberately not scaled
+// with the pill: it is a hit target, not character art, and 28px is already
+// the floor for one.
 export const VOICE_PILL_CANCEL = Object.freeze({ size: 28, gap: 8 });
+
+// The pill's size, as a multiple of the footprints above. WINDOW_SIZES.BASE is
+// sized for `max` once at creation, so this stays a pure renderer concern —
+// dragging the corner grip never resizes the native window, which would paint
+// a stale-texture frame per pointer move.
+export const VOICE_PILL_SCALE = Object.freeze({ min: 0.75, max: 1.5, default: 1 });
+
+// The sizes Settings offers as buttons. The grip itself is continuous; this is
+// the keyboard-reachable path to the same setting, since the pill's window is
+// created `focusable: false` and never sees a key event.
+export const VOICE_PILL_SCALE_PRESETS = Object.freeze([
+  VOICE_PILL_SCALE.min,
+  VOICE_PILL_SCALE.default,
+  1.25,
+  VOICE_PILL_SCALE.max,
+]);
+
+/** @param {number} value */
+export function clampVoicePillScale(value) {
+  const scale = Number(value);
+  if (!Number.isFinite(scale)) return VOICE_PILL_SCALE.default;
+  // Whole percents: the grip reads out a percentage, and a stored 1.0833 would
+  // make the same size display differently on either side of a restart.
+  const rounded = Math.round(scale * 100) / 100;
+  return Math.min(VOICE_PILL_SCALE.max, Math.max(VOICE_PILL_SCALE.min, rounded));
+}
+
+/**
+ * The footprints at a chosen scale. Rounded to whole pixels rather than applied
+ * as a CSS transform: the Lottie identity draws into a canvas sized from this,
+ * so transforming it would upscale a raster instead of redrawing the artwork.
+ *
+ * @param {number} [scale]
+ */
+export function scaleVoicePillFootprint(scale = VOICE_PILL_SCALE.default) {
+  const factor = clampVoicePillScale(scale);
+  if (factor === 1) return VOICE_PILL_FOOTPRINT;
+  const box = ({ width, height }) =>
+    Object.freeze({ width: Math.round(width * factor), height: Math.round(height * factor) });
+  return Object.freeze({
+    idle: box(VOICE_PILL_FOOTPRINT.idle),
+    recording: box(VOICE_PILL_FOOTPRINT.recording),
+  });
+}
 
 export const LISTENING_ENTRANCE_TIMING = Object.freeze({
   // A short hold that reads as an acknowledged press before the control

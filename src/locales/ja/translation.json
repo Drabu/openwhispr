@@ -2307,10 +2307,15 @@
         "description": "どの言語で話しても、貼り付けられるテキストは翻訳済みになります"
       },
       "identity": {
+        "title": "ピル",
         "style": "ピルのキャラクター",
         "styleDescription": "フローティングピルで音声の状態を示すアートワークを選びます。",
         "styleCat": "猫（手描き）",
-        "styleLottie": "アニメーションファイル"
+        "styleLottie": "アニメーションファイル",
+        "idleMotion": "待機中も動かし続ける",
+        "idleMotionDescription": "そうしないとしばらくで静止します。終日表示されるピルでは、動きは多少バッテリーを使います。",
+        "size": "ピルのサイズ",
+        "sizeDescription": "ピルの角をドラッグして手動で調整するか、ここでサイズを選びます。角をダブルクリックすると 100% に戻ります。"
       }
     },
     "permissions": {
@@ -4610,7 +4615,8 @@
     },
     "buttons": {
       "cancelRecording": "録音をキャンセル",
-      "cancelProcessing": "処理をキャンセル"
+      "cancelProcessing": "処理をキャンセル",
+      "resizePill": "ドラッグしてピルのサイズを変更"
     },
     "commandMenu": {
       "stopListening": "録音を停止",

@@ -3064,10 +3064,15 @@
         "description": "Dictez dans n'importe quelle langue : le texte collé ressort traduit"
       },
       "identity": {
+        "title": "Pastille",
         "style": "Personnage de la pastille",
         "styleDescription": "Quelle illustration affiche les états vocaux sur la pastille flottante.",
         "styleCat": "Chat (dessiné)",
-        "styleLottie": "Fichier d'animation"
+        "styleLottie": "Fichier d'animation",
+        "idleMotion": "Continuer à bouger au repos",
+        "idleMotionDescription": "Sinon le personnage s’immobilise au bout d’un moment. Le mouvement coûte un peu de batterie sur une pastille affichée toute la journée.",
+        "size": "Taille de la pastille",
+        "sizeDescription": "Faites glisser le coin de la pastille pour l’ajuster à la main, ou choisissez une taille ici. Double-cliquez sur le coin pour revenir à 100 %."
       }
     },
     "permissions": {
@@ -4991,7 +4996,8 @@
     },
     "buttons": {
       "cancelRecording": "Annuler l’enregistrement",
-      "cancelProcessing": "Annuler le traitement"
+      "cancelProcessing": "Annuler le traitement",
+      "resizePill": "Faites glisser pour redimensionner la pastille"
     },
     "commandMenu": {
       "stopListening": "Arrêter l’écoute",

@@ -3057,10 +3057,15 @@
         "description": "Dictate in any language — the pasted text comes out translated"
       },
       "identity": {
+        "title": "Pill",
         "style": "Pill character",
         "styleDescription": "Which artwork shows the voice states on the floating pill.",
         "styleCat": "Cat (drawn)",
-        "styleLottie": "Animation file"
+        "styleLottie": "Animation file",
+        "idleMotion": "Keep moving when idle",
+        "idleMotionDescription": "The character settles after a while otherwise. Motion costs a little battery on a pill that is on screen all day.",
+        "size": "Pill size",
+        "sizeDescription": "Drag the pill's corner to size it by hand, or pick a size here. Double-click the corner to go back to 100%."
       }
     },
     "permissions": {
@@ -4963,7 +4968,8 @@
     },
     "buttons": {
       "cancelRecording": "Cancel recording",
-      "cancelProcessing": "Cancel processing"
+      "cancelProcessing": "Cancel processing",
+      "resizePill": "Drag to resize the pill"
     },
     "commandMenu": {
       "stopListening": "Stop listening",

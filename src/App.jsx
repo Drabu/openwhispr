@@ -24,6 +24,7 @@ import { VoiceModePanelCore } from "./components/dictation/VoiceModePanelCore";
 import { PillTooltip } from "./components/dictation/PillTooltip";
 import { PillCommandMenu } from "./components/dictation/PillCommandMenu";
 import { LiquidCancelButton } from "./components/dictation/LiquidCancelButton";
+import { PillResizeGrip } from "./components/dictation/PillResizeGrip";
 import { createMainWindowResizeCoordinator } from "./utils/mainWindowResizeCoordinator";
 import {
   LIVE_TRANSCRIPT_ENTRANCE_TIMING,
@@ -33,7 +34,7 @@ import {
   resolveVoiceHorizontalDirection,
   resolveVoicePillDock,
   resolveVoicePillInteraction,
-  VOICE_PILL_FOOTPRINT,
+  scaleVoicePillFootprint,
   isVoicePillActivationKey,
   shouldActivateVoicePill,
   shouldOfferLiveTranscriptReopen,
@@ -69,6 +70,14 @@ export default function App() {
   const floatingIconAutoHide = useSettingsStore((s) => s.floatingIconAutoHide);
   const panelStartPosition = useSettingsStore((s) => s.panelStartPosition);
   const voiceIdentityStyle = useSettingsStore((s) => s.voiceIdentityStyle);
+  const pillIdleMotion = useSettingsStore((s) => s.pillIdleMotion);
+  const pillScale = useSettingsStore((s) => s.pillScale);
+  const setPillScale = useSettingsStore((s) => s.setPillScale);
+  // The grip's uncommitted size. Held locally so a drag re-renders this window
+  // only, instead of writing localStorage (and waking Settings) 60 times a second.
+  const [pillScaleDraft, setPillScaleDraft] = useState(null);
+  const pillResizing = pillScaleDraft !== null;
+  const activePillScale = pillScaleDraft ?? pillScale;
   const prevAutoHideRef = useRef(floatingIconAutoHide);
   const [voiceHorizontalDirection, setVoiceHorizontalDirection] = useState(() =>
     resolveVoiceHorizontalDirection(panelStartPosition)
@@ -198,6 +207,7 @@ export default function App() {
     isHearingAmbient,
     isMissed,
     pendingSubmit,
+    justSent,
     cancelPendingSubmit,
     ambientMonitorActive,
     ambientMuted,
@@ -400,6 +410,9 @@ export default function App() {
     // Above hover: the countdown is the only state the pill is asking you to
     // act on, so a pointer resting on it must not hide what is about to happen.
     if (pendingSubmit) return "submitting";
+    // Directly below the countdown it replaces: the Return has gone out, and
+    // for a moment the pill is reporting that rather than offering anything.
+    if (justSent) return "sent";
     if (isHovered && !isRecording && !isVisuallyProcessing) return "hover";
     // Outranks the ambient states so the shake is not swallowed by the next
     // thing the mic hears.
@@ -455,9 +468,8 @@ export default function App() {
   // targets, not rendered sizes: the pill transitions between footprints over
   // GROW_TRANSITION, and the skin tweens its geometry to match
   // (usePillFootprintTween in LiquidCancelButton).
-  const cancelPillFootprint = isCompactPill
-    ? VOICE_PILL_FOOTPRINT.recording
-    : VOICE_PILL_FOOTPRINT.idle;
+  const pillFootprints = scaleVoicePillFootprint(activePillScale);
+  const cancelPillFootprint = isCompactPill ? pillFootprints.recording : pillFootprints.idle;
   const activateVoicePill = () => {
     if (!pillIsInteractive) return;
     if (canReopenLiveTranscript) {
@@ -501,9 +513,47 @@ export default function App() {
   // masked shrink back from the Live Transcript panel.
   const pillVisuallySuppressed = dictationErrorSuppressesPill || panelReturnResizeActive;
 
+  // The grip grows the pill into the window's click-through headroom, which the
+  // dock insets reserve on the far side of whichever corner is pinned.
+  const pillResizeDock =
+    voicePillDock === "center" ? "center" : voicePillDock === "bottom-left" ? "left" : "right";
+  // Only offered on the resting pill: mid-dictation the footprint is already
+  // animating between the two boxes, and resizing it then fights that tween.
+  const pillResizeOffered =
+    !panelMounted &&
+    !pillVisuallySuppressed &&
+    !isRecording &&
+    !isProcessing &&
+    !voiceActivity.isAgentThinking &&
+    !pendingSubmit &&
+    !justSent;
+  // Mounted whenever it is offered, shown on hover: unmounting it instead would
+  // skip its fade and pop the grip in and out.
+  const pillResizeGripVisible = pillResizeOffered && (isHovered || pillResizing);
+  // Hover normally ends with a mouseleave on the pill, but a grip drag suppresses
+  // those (and can finish well outside the pill), so the end of a resize has to
+  // decide for itself whether the pointer is still on the control.
+  const releasePillHoverUnlessPointerOn = (pointer) => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    const slack = 12; // the grip straddles the pill's corner
+    if (
+      rect &&
+      pointer &&
+      pointer.x >= rect.left - slack &&
+      pointer.x <= rect.right + slack &&
+      pointer.y >= rect.top - slack &&
+      pointer.y <= rect.bottom + slack
+    ) {
+      return;
+    }
+    setIsHovered(false);
+    if (pillIsInteractive && !isCommandMenuOpen) setWindowInteractivity(false);
+  };
+
   useLinuxPillInteractivity({
     pillRef: pillPresenceRef,
-    captureWindow: isCommandMenuOpen || toastCount > 0 || panelMounted || isDragging,
+    captureWindow:
+      isCommandMenuOpen || toastCount > 0 || panelMounted || isDragging || pillResizing,
     pillInteractive: pillIsInteractive && !pillVisuallySuppressed,
   });
 
@@ -529,6 +579,10 @@ export default function App() {
             setWindowInteractivity(true);
           }}
           onMouseLeave={() => {
+            // A grip drag leaves the pill's rect almost immediately. Dropping
+            // the hover here would hide the grip and hand the window back to
+            // click-through mid-resize.
+            if (pillResizing) return;
             setIsHovered(false);
             if (!pillIsInteractive) return;
             if (!isCommandMenuOpen) {
@@ -557,6 +611,9 @@ export default function App() {
               horizontalDirection={voiceHorizontalDirection}
               ambientActive={ambientMonitorActive}
               identityStyle={voiceIdentityStyle}
+              idleMotion={pillIdleMotion}
+              scale={activePillScale}
+              resizing={pillResizing}
               submitDeadline={pendingSubmit?.deadline ?? null}
               submitDelayMs={pendingSubmit?.delayMs ?? 0}
               role={pillIsInteractive ? "button" : "status"}
@@ -623,6 +680,24 @@ export default function App() {
               }}
             />
           </PillTooltip>
+          {pillResizeOffered && (
+            <PillResizeGrip
+              scale={activePillScale}
+              dock={pillResizeDock}
+              pillRef={buttonRef}
+              pillWidth={cancelPillFootprint.width}
+              pillHeight={cancelPillFootprint.height}
+              visible={pillResizeGripVisible}
+              readout={pillResizing ? `${Math.round(activePillScale * 100)}%` : null}
+              label={t("app.buttons.resizePill")}
+              onPreview={setPillScaleDraft}
+              onCommit={(next, pointer) => {
+                setPillScaleDraft(null);
+                setPillScale(next);
+                releasePillHoverUnlessPointerOn(pointer);
+              }}
+            />
+          )}
           <LiquidCancelButton
             visible={voicePillInteraction.cancelVisible}
             fused={cancelFused}

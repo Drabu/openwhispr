@@ -13,7 +13,7 @@ export const RESTING_WAVE_SILHOUETTE = [6, 12, 5, 9, 7, 22, 18, 5, 20, 12, 17];
 // compressed them into a fluid ridge with little bar-to-bar variance.
 const LEVEL_GAIN = 8;
 const LEVEL_EXPONENT = 0.75;
-const toBarLevel = (rms: number) =>
+export const toBarLevel = (rms: number) =>
   Math.min(1, Math.pow(Math.max(0, rms) * LEVEL_GAIN, LEVEL_EXPONENT));
 
 export const resolveWaveformBarHeight = (rms: number, maxPx = WAVEFORM_BAR_MAX_PX) =>

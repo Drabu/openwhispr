@@ -14,6 +14,7 @@ import {
 } from "../helpers/ambientLevelGate";
 
 import { clampPressEnterDelayMs } from "../helpers/submitGrace";
+import { clampVoicePillScale, VOICE_PILL_SCALE } from "../helpers/voicePillPresentation";
 
 export type AmbientNoiseProfileName = "quiet" | "normal" | "noisy";
 export type VoiceIdentityStyle = "cat" | "lottie";
@@ -473,6 +474,7 @@ const BOOLEAN_SETTINGS = new Set([
   "pauseMediaOnDictation",
   "floatingIconAutoHide",
   "ambientIndicatorEnabled",
+  "pillIdleMotion",
   "autoStopOnSilence",
   "startMinimized",
   "meetingProcessDetection",
@@ -524,6 +526,9 @@ const NUMERIC_SETTINGS = new Set([
   "whisperVadMaxSpeechDurationS",
   "whisperVadSpeechPadMs",
   "whisperVadSamplesOverlap",
+  // Here, unlike the other pill settings, because the grip lives in the pill
+  // window and the preset row in Settings: each must see the other's change.
+  "pillScale",
 ]);
 
 const WHISPER_VAD_DEFAULTS = whisperVadConstants.DEFAULTS;
@@ -1112,6 +1117,12 @@ export interface SettingsState
   /** Which artwork carries the pill's voice states. */
   voiceIdentityStyle: VoiceIdentityStyle;
   setVoiceIdentityStyle: (style: VoiceIdentityStyle) => void;
+  /** Keep the pill's character animating at rest instead of settling after a while. */
+  pillIdleMotion: boolean;
+  setPillIdleMotion: (value: boolean) => void;
+  /** The pill's size as a multiple of its designed footprint (VOICE_PILL_SCALE). */
+  pillScale: number;
+  setPillScale: (value: number) => void;
   /** How long the silence must last before the recording finishes itself. */
   autoStopSilenceMs: number;
   startMinimized: boolean;
@@ -1897,6 +1908,8 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   ambientCommitMode: (readString("ambientCommitMode", "silence") === "hotkey"
     ? "hotkey"
     : "silence") as "silence" | "hotkey",
+  pillIdleMotion: readBoolean("pillIdleMotion", true),
+  pillScale: clampVoicePillScale(readNumber("pillScale", VOICE_PILL_SCALE.default)),
   voiceIdentityStyle: (readString("voiceIdentityStyle", "cat") === "lottie"
     ? "lottie"
     : "cat") as VoiceIdentityStyle,
@@ -2754,6 +2767,12 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setAmbientStartMode: (mode: "speech" | "hotkey") => {
     if (isBrowser) localStorage.setItem("ambientStartMode", mode);
     set({ ambientStartMode: mode });
+  },
+  setPillIdleMotion: createBooleanSetter("pillIdleMotion"),
+  setPillScale: (value: number) => {
+    const scale = clampVoicePillScale(value);
+    if (isBrowser) localStorage.setItem("pillScale", String(scale));
+    set({ pillScale: scale });
   },
   setVoiceIdentityStyle: (style: VoiceIdentityStyle) => {
     if (isBrowser) localStorage.setItem("voiceIdentityStyle", style);
@@ -4596,6 +4615,9 @@ export async function initializeSettings(): Promise<void> {
         // Same whitelist as the setter — a hand-edited localStorage value
         // synced from another window must not exceed the offered durations.
         value = snapMicWarmHold(parsed);
+      } else if (key === "pillScale") {
+        // Same clamp as the setter: the window is only sized for the max.
+        value = clampVoicePillScale(parsed);
       } else {
         value = parsed;
       }

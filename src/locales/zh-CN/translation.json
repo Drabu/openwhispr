@@ -2307,10 +2307,15 @@
         "description": "用任何语言听写——粘贴的文本会自动翻译"
       },
       "identity": {
+        "title": "胶囊",
         "style": "胶囊角色",
         "styleDescription": "由哪种图形在悬浮胶囊上显示语音状态。",
         "styleCat": "猫（手绘）",
-        "styleLottie": "动画文件"
+        "styleLottie": "动画文件",
+        "idleMotion": "空闲时保持动画",
+        "idleMotionDescription": "否则角色会在一段时间后静止。常驻屏幕的胶囊上，动画会消耗一点电量。",
+        "size": "胶囊大小",
+        "sizeDescription": "拖动胶囊的边角可手动调整大小，也可在此选择一个尺寸。双击边角恢复为 100%。"
       }
     },
     "permissions": {
@@ -4610,7 +4615,8 @@
     },
     "buttons": {
       "cancelRecording": "取消录音",
-      "cancelProcessing": "取消处理"
+      "cancelProcessing": "取消处理",
+      "resizePill": "拖动以调整胶囊大小"
     },
     "commandMenu": {
       "stopListening": "停止录音",

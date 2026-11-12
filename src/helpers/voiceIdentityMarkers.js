@@ -14,4 +14,19 @@ export const VOICE_IDENTITY_MARKERS = [
   "muted",
   "missed",
   "submitting",
+  "sent",
+];
+
+/**
+ * Markers that are not states. A state whose artwork moves into a pose needs a
+ * second slot to settle into, because looping its own slot would replay the
+ * move — `muted` lifts the paws over the eyes, then hands over to `muted-hold`,
+ * which is the same pose already held, dancing on a loop.
+ */
+export const MUTED_HOLD_MARKER = "muted-hold";
+export const VOICE_IDENTITY_HOLD_MARKERS = [MUTED_HOLD_MARKER];
+
+export const ALL_VOICE_IDENTITY_MARKERS = [
+  ...VOICE_IDENTITY_MARKERS,
+  ...VOICE_IDENTITY_HOLD_MARKERS,
 ];

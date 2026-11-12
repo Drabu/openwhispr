@@ -2307,10 +2307,15 @@
         "description": "Detta in qualsiasi lingua: il testo incollato esce tradotto"
       },
       "identity": {
+        "title": "Pillola",
         "style": "Personaggio della pillola",
         "styleDescription": "Quale grafica mostra gli stati vocali sulla pillola flottante.",
         "styleCat": "Gatto (disegnato)",
-        "styleLottie": "File di animazione"
+        "styleLottie": "File di animazione",
+        "idleMotion": "Continuare a muoversi da fermo",
+        "idleMotionDescription": "Altrimenti il personaggio si ferma dopo un po’. Il movimento consuma un po’ di batteria su una pillola sempre a schermo.",
+        "size": "Dimensione della pillola",
+        "sizeDescription": "Trascina l’angolo della pillola per regolarla a mano, oppure scegli una dimensione qui. Fai doppio clic sull’angolo per tornare al 100%."
       }
     },
     "permissions": {
@@ -4631,7 +4636,8 @@
     },
     "buttons": {
       "cancelRecording": "Annulla registrazione",
-      "cancelProcessing": "Annulla elaborazione"
+      "cancelProcessing": "Annulla elaborazione",
+      "resizePill": "Trascina per ridimensionare la pillola"
     },
     "commandMenu": {
       "stopListening": "Smetti di ascoltare",

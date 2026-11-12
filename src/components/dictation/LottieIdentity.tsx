@@ -8,7 +8,7 @@ import { cn } from "../lib/utils";
 import { resolveWaveformBarHeight, WAVEFORM_BAR_MAX_PX, WAVEFORM_BAR_MIN_PX } from "./waveformMath";
 import type { CatIdentityState } from "./CatIdentity";
 import logger from "../../utils/logger";
-import { VOICE_IDENTITY_MARKERS } from "../../helpers/voiceIdentityMarkers";
+import { ALL_VOICE_IDENTITY_MARKERS, MUTED_HOLD_MARKER } from "../../helpers/voiceIdentityMarkers";
 
 DotLottie.setWasmUrl(wasmUrl);
 
@@ -16,6 +16,8 @@ interface LottieIdentityProps {
   state: CatIdentityState;
   /** Returns the current input level (0..~1) or null when no signal source exists. */
   getLevel: () => number | null;
+  /** Keep the idle loops running instead of settling after REST_AFTER_MS. */
+  idleMotion?: boolean;
   size?: number;
   className?: string;
 }
@@ -31,14 +33,23 @@ const STATE_SPEED: Record<CatIdentityState, number> = {
   muted: 1,
   missed: 1,
   submitting: 1,
+  sent: 1,
 };
 
-// Played once rather than looped: both are momentary reactions, and a looping
-// head-shake reads as a stuck animation.
-const ONE_SHOT_STATES = new Set<CatIdentityState>(["missed"]);
-// Held on a still frame. Muted means the mic is off, so motion would be a lie;
-// submitting has the boundary ring carrying the countdown already.
-const FROZEN_STATES = new Set<CatIdentityState>(["muted", "submitting"]);
+// Played once rather than looped: a looping head-shake reads as a stuck
+// animation, and muted's artwork is a move into a held pose — the paws lifting
+// over the eyes — which only means anything the first time through.
+const ONE_SHOT_STATES = new Set<CatIdentityState>(["missed", "muted", "sent"]);
+// States whose one-shot is an entrance rather than a reaction: when it finishes
+// the player hands over to a looping marker holding the pose it arrived at, so
+// the bear carries on dancing with its paws where the entrance put them.
+const HOLD_AFTER_ENTRANCE: Partial<Record<CatIdentityState, string>> = {
+  muted: MUTED_HOLD_MARKER,
+};
+// Held on a still frame. Nothing is, currently: submitting used to be, on the
+// grounds that the countdown ring was already saying everything — but a bear
+// standing dead still under a draining ring reads as a hang, not as waiting.
+const FROZEN_STATES = new Set<CatIdentityState>([]);
 
 // Matches CatIdentity: the pill is on screen all day, so idle eventually stops.
 const REST_AFTER_MS = 45000;
@@ -64,7 +75,13 @@ const LEVEL_RELEASE = 0.12;
  * everything here is playback: pick the marker, set the tempo, freeze or loop.
  * Anything the states need to look different has to come from the file.
  */
-export function LottieIdentity({ state, getLevel, size = 22, className }: LottieIdentityProps) {
+export function LottieIdentity({
+  state,
+  getLevel,
+  idleMotion = false,
+  size = 22,
+  className,
+}: LottieIdentityProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef<DotLottie | null>(null);
   const [ready, setReady] = useState(false);
@@ -89,7 +106,7 @@ export function LottieIdentity({ state, getLevel, size = 22, className }: Lottie
 
     const onLoad = () => {
       markersRef.current = new Set((player.markers() ?? []).map((marker) => marker.name));
-      const missing = VOICE_IDENTITY_MARKERS.filter((name) => !markersRef.current.has(name));
+      const missing = ALL_VOICE_IDENTITY_MARKERS.filter((name) => !markersRef.current.has(name));
       if (missing.length) {
         logger.warn(
           "Voice identity animation is missing markers",
@@ -117,13 +134,13 @@ export function LottieIdentity({ state, getLevel, size = 22, className }: Lottie
   }, []);
 
   useEffect(() => {
-    if (state !== "idle") {
+    if (state !== "idle" || idleMotion) {
       setResting(false);
       return undefined;
     }
     const timer = setTimeout(() => setResting(true), REST_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [state]);
+  }, [state, idleMotion]);
 
   // Marker, loop mode and tempo all follow the state; the artwork supplies the
   // rest. Reduced motion holds the state's first frame so it is still readable.
@@ -131,23 +148,48 @@ export function LottieIdentity({ state, getLevel, size = 22, className }: Lottie
     const player = playerRef.current;
     if (!player || !ready) return;
 
-    if (markersRef.current.has(state)) {
-      player.setMarker(state);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const hold = HOLD_AFTER_ENTRANCE[state];
+    // Reduced motion never reaches the end of an entrance, so it starts at the
+    // destination instead — the hold marker's first frame is the pose the
+    // entrance would have arrived at.
+    const marker = hold && reduceMotion && markersRef.current.has(hold) ? hold : state;
+
+    if (markersRef.current.has(marker)) {
+      player.setMarker(marker);
     } else if (!warnedRef.current) {
       warnedRef.current = true;
-      logger.warn("No marker for voice identity state", { state }, "ui");
+      logger.warn("No marker for voice identity state", { state, marker }, "ui");
     }
 
-    player.setLoop(!ONE_SHOT_STATES.has(state));
+    player.setLoop(marker !== state || !ONE_SHOT_STATES.has(state));
     player.setSpeed(STATE_SPEED[state]);
 
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (FROZEN_STATES.has(state) || resting || reduceMotion) {
       player.pause();
       return;
     }
     player.play();
   }, [state, ready, resting]);
+
+  // Entrance → hold. The entrance plays once and would otherwise stop on its
+  // last frame; this moves it onto the looping marker of the same pose, which
+  // is seamless because a slot is exactly one cycle long, so the frame it ends
+  // on is the frame the hold begins from.
+  useEffect(() => {
+    const player = playerRef.current;
+    const hold = HOLD_AFTER_ENTRANCE[state];
+    if (!player || !ready || !hold || !markersRef.current.has(hold)) return undefined;
+
+    const onComplete = () => {
+      player.setMarker(hold);
+      player.setLoop(true);
+      player.play();
+    };
+
+    player.addEventListener("complete", onComplete);
+    return () => player.removeEventListener("complete", onComplete);
+  }, [state, ready]);
 
   useEffect(() => {
     const player = playerRef.current;

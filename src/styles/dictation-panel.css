@@ -176,6 +176,16 @@
   box-shadow: none;
 }
 
+/* The resting pill: character only, no capsule behind it. The chrome returns
+   for the states that are drawn on that boundary — see `chromeless` in
+   VoicePill.tsx. Same three declarations as the headless rules above, so the
+   transition out of it is the one the pill already runs. */
+.voice-pill-control[data-chromeless="true"] {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+}
+
 .liquid-cancel-skin {
   pointer-events: none;
 }
@@ -514,5 +524,117 @@
     animation: none;
     color: var(--color-foreground);
     -webkit-text-fill-color: currentColor;
+  }
+}
+
+/* The resting wave drifts so idle reads as alive rather than as a frozen
+   screenshot. Scale, not height: it composites on the GPU, where animating
+   height would relayout the lane eleven times a frame on an always-on-screen
+   widget. */
+.voice-pill-resting-bar {
+  animation: voice-pill-resting-drift 2.6s ease-in-out infinite;
+}
+
+/* Muted and unavailable hold still on purpose: both mean nothing is being
+   heard, and they share their dimmed chrome with idle — motion is the only
+   thing left to tell them apart. */
+[data-wave-frozen] .voice-pill-resting-bar {
+  animation: none;
+}
+
+@keyframes voice-pill-resting-drift {
+  0%,
+  100% {
+    transform: scaleY(0.72);
+  }
+  50% {
+    transform: scaleY(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-pill-resting-bar {
+    animation: none;
+  }
+}
+
+/* The pill's resize corner. It sits on the pill corner furthest from the dock,
+   because the near one is the one the dock insets pin in place — so the pill
+   grows into the window's click-through headroom and never moves on screen.
+   Its own 18px box deliberately does not scale with the pill: it is a hit
+   target, and the pill it resizes goes down to 75%. */
+.voice-pill-resize-grip {
+  position: absolute;
+  z-index: 60;
+  display: flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  translate: -50% -50%;
+  border: 1px solid var(--color-border-hover);
+  border-radius: 9999px;
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-card);
+  color: var(--color-muted-foreground);
+  opacity: 0;
+  scale: 0.7;
+  pointer-events: none;
+  transition:
+    opacity 140ms ease-out,
+    scale 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Mirrored rather than drawn twice: the glyph's diagonal has to point away
+   from the dock. Only the glyph — mirroring the grip would reverse the size
+   readout nested inside it. */
+.voice-pill-resize-grip-right svg {
+  transform: scaleX(-1);
+}
+
+.voice-pill-resize-grip[data-visible] {
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
+}
+
+.voice-pill-resize-grip:hover {
+  color: var(--color-foreground);
+  border-color: var(--color-foreground);
+}
+
+.voice-pill-resize-grip svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The live size readout, shown only while the grip is being dragged. Parked
+   above the grip, in the same headroom the hover tooltip uses. */
+.voice-pill-resize-readout {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  translate: -50% 0;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border-hover);
+  border-radius: 9999px;
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-card);
+  color: var(--color-foreground);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 15px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-pill-resize-grip {
+    transition: none;
   }
 }

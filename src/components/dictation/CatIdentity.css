@@ -479,6 +479,51 @@
   }
 }
 
+/* Sent: the message is gone. Ears up, eyes wide and one hop — played once,
+   because it reports an event rather than describing a state the pill is
+   sitting in. */
+.cat-identity[data-state="sent"] .cat-ear-pose[data-side="left"] {
+  transform: rotate(-16deg);
+}
+
+.cat-identity[data-state="sent"] .cat-ear-pose[data-side="right"] {
+  transform: rotate(16deg);
+}
+
+.cat-identity[data-state="sent"] .cat-eye-pose {
+  transform: scale(1.18);
+}
+
+.cat-identity[data-state="sent"] .cat-head {
+  animation: cat-sent-hop 460ms cubic-bezier(0.2, 0, 0, 1) 1 both;
+}
+
+.cat-identity[data-state="sent"] .cat-tail {
+  animation: cat-sent-flick 460ms ease-out 1 both;
+}
+
+@keyframes cat-sent-hop {
+  0% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-1.6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes cat-sent-flick {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-11deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cat-identity[data-state="missed"] .cat-head {
     animation: none;
@@ -488,6 +533,13 @@
   /* The ring still drains — it is the countdown, not decoration — but the cat
      stops bobbing. */
   .cat-identity[data-state="submitting"] .cat-head {
+    animation: none;
+  }
+
+  /* The pose stays — ears up, eyes wide still say it landed — only the hop
+     and the flick go. */
+  .cat-identity[data-state="sent"] .cat-head,
+  .cat-identity[data-state="sent"] .cat-tail {
     animation: none;
   }
 }

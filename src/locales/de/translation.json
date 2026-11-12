@@ -3057,10 +3057,15 @@
         "description": "Diktiere in beliebiger Sprache — der eingefügte Text kommt übersetzt heraus"
       },
       "identity": {
+        "title": "Pille",
         "style": "Pillen-Figur",
         "styleDescription": "Welche Grafik die Sprachzustände auf der schwebenden Pille zeigt.",
         "styleCat": "Katze (gezeichnet)",
-        "styleLottie": "Animationsdatei"
+        "styleLottie": "Animationsdatei",
+        "idleMotion": "Im Ruhezustand weiter bewegen",
+        "idleMotionDescription": "Sonst kommt die Figur nach einer Weile zur Ruhe. Bewegung kostet etwas Akku bei einer Pille, die den ganzen Tag sichtbar ist.",
+        "size": "Pillengröße",
+        "sizeDescription": "Ziehen Sie an der Ecke der Pille, um sie von Hand anzupassen, oder wählen Sie hier eine Größe. Ein Doppelklick auf die Ecke setzt sie auf 100 % zurück."
       }
     },
     "permissions": {
@@ -4963,7 +4968,8 @@
     },
     "buttons": {
       "cancelRecording": "Aufnahme abbrechen",
-      "cancelProcessing": "Verarbeitung abbrechen"
+      "cancelProcessing": "Verarbeitung abbrechen",
+      "resizePill": "Ziehen, um die Größe der Pille zu ändern"
     },
     "commandMenu": {
       "stopListening": "Aufnahme beenden",

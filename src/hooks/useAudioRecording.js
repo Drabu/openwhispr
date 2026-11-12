@@ -54,6 +54,10 @@ const DEMO_AUDIO_LEVEL_INTERVAL_MS = 80;
 // so it expires on its own rather than waiting to be dismissed.
 const MISSED_PULSE_MS = 1600;
 
+// The raised-paw beat after a Return goes out. Covers the gesture plus a moment
+// at the top; the pill has nothing to say past that, so it drops back to rest.
+const SENT_HOLD_MS = 1100;
+
 export const useAudioRecording = (toast, options = {}) => {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
@@ -75,6 +79,11 @@ export const useAudioRecording = (toast, options = {}) => {
   // and so a slow frame cannot submit late.
   const [pendingSubmit, setPendingSubmit] = useState(null);
   const submitTimerRef = useRef(null);
+  // The beat after the Return goes out, during which the pill throws a paw up.
+  // Long enough to read at a glance, short enough that the pill is back to
+  // resting before you look again.
+  const [justSent, setJustSent] = useState(false);
+  const sentTimerRef = useRef(null);
   // Esc has one owner at a time in main, and the recording path drops it on
   // every non-recording state report. Those reports keep arriving after the
   // paste, so without this the grace period's grab is taken straight back off
@@ -85,6 +94,12 @@ export const useAudioRecording = (toast, options = {}) => {
     if (!submitTimerRef.current) return;
     clearTimeout(submitTimerRef.current);
     submitTimerRef.current = null;
+  }, []);
+
+  const clearSentTimer = useCallback(() => {
+    if (!sentTimerRef.current) return;
+    clearTimeout(sentTimerRef.current);
+    sentTimerRef.current = null;
   }, []);
 
   const cancelPendingSubmit = useCallback(() => {
@@ -101,7 +116,13 @@ export const useAudioRecording = (toast, options = {}) => {
     const result = await window.electronAPI?.pressEnter?.();
     if (result && result.success === false) {
       logger.info("Submit after pasting skipped", { reason: result.reason }, "clipboard");
+      return;
     }
+    // Only on a Return that actually went out: the pill's "sent" pose is a
+    // report, and reporting a keystroke that focus moved away from would be a
+    // lie about where the message went.
+    setJustSent(true);
+    sentTimerRef.current = setTimeout(() => setJustSent(false), SENT_HOLD_MS);
   }, [clearSubmitTimer]);
 
   // Deadline set here, keystroke posted by submitNow. A zero delay still goes
@@ -120,6 +141,7 @@ export const useAudioRecording = (toast, options = {}) => {
   );
 
   useEffect(() => clearSubmitTimer, [clearSubmitTimer]);
+  useEffect(() => clearSentTimer, [clearSentTimer]);
 
   // Esc cancels it as well as the pill, and that needs a global grab: through
   // the whole grace period focus is in the app the text landed in, so a
@@ -294,6 +316,10 @@ export const useAudioRecording = (toast, options = {}) => {
       // submit the last one — and the Return would land mid-way through this
       // recording's own paste.
       cancelPendingSubmit();
+      // Same for the raised paw: it is about the message just sent, and the
+      // pill has a recording to show instead.
+      clearSentTimer();
+      setJustSent(false);
       lastStartOptionsRef.current = { voiceAgentRequested, translationRequested };
       startLockRef.current = true;
       stopRequestedDuringStartRef.current = false;
@@ -495,7 +521,15 @@ export const useAudioRecording = (toast, options = {}) => {
         if (manager) reportManagerLifecycle(manager, attempt ?? recordingAttemptRef.current);
       }
     },
-    [t, toast, dismissDictationError, reserveRecording, reportManagerLifecycle, cancelPendingSubmit]
+    [
+      t,
+      toast,
+      dismissDictationError,
+      reserveRecording,
+      reportManagerLifecycle,
+      cancelPendingSubmit,
+      clearSentTimer,
+    ]
   );
 
   const performStopRecording = useCallback(async () => {
@@ -1613,6 +1647,7 @@ export const useAudioRecording = (toast, options = {}) => {
     isMissed,
     pendingSubmit,
     cancelPendingSubmit,
+    justSent,
     ambientMonitorActive: ambientModeOn,
     ambientMuted,
   };

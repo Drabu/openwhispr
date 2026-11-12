@@ -7,8 +7,9 @@ import { CatIdentity, type CatIdentityState } from "./CatIdentity";
 import { LottieIdentity } from "./LottieIdentity";
 import { RESTING_WAVE_SILHOUETTE, WAVEFORM_BAR_COUNT } from "./waveformMath";
 import {
-  VOICE_PILL_FOOTPRINT,
   VOICE_PILL_GROW_TRANSITION,
+  VOICE_PILL_SCALE,
+  scaleVoicePillFootprint,
 } from "../../helpers/voicePillPresentation";
 
 export type VoicePillState =
@@ -21,6 +22,7 @@ export type VoicePillState =
   | "processing"
   | "thinking"
   | "submitting"
+  | "sent"
   | "unavailable";
 
 interface VoicePillProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
@@ -42,6 +44,12 @@ interface VoicePillProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"
   ambientActive?: boolean;
   /** Which artwork carries the voice states: the drawn cat, or a .lottie. */
   identityStyle?: "cat" | "lottie";
+  /** Keep the idle character and resting wave moving instead of settling. */
+  idleMotion?: boolean;
+  /** User-chosen size multiplier (VOICE_PILL_SCALE). Every px below derives from it. */
+  scale?: number;
+  /** The corner grip is being dragged: size transitions off so it tracks the pointer. */
+  resizing?: boolean;
   /** When the pending Return fires, as an epoch ms; drives the countdown ring. */
   submitDeadline?: number | null;
   /** The grace period the ring is a fraction of. */
@@ -55,10 +63,17 @@ const RESTING_WAVE_HEIGHTS = Array.from(
   (_, index) => RESTING_WAVE_SILHOUETTE[index % RESTING_WAVE_SILHOUETTE.length]
 );
 
-// Icon↔waveform spacing inside the compact pill. Together with the 102px
-// recording footprint and pr-1.5, centering lands the documented 6/12 edge
-// insets (VOICE_PILL_FOOTPRINT in voicePillPresentation.js).
+// Icon↔waveform spacing inside the compact pill. Together with the recording
+// footprint and the right-hand padding, centering lands the documented 6/12
+// edge insets (VOICE_PILL_FOOTPRINT in voicePillPresentation.js). All of the
+// px constants below are at scale 1 and go through `px()`.
 const COMPACT_CONTENT_GAP_PX = 6;
+const COMPACT_EDGE_PAD_PX = 6;
+// Paired with VOICE_PILL_FOOTPRINT's 6px icon inset; changing one without the
+// other moves the waveform off the documented edge insets.
+const IDENTITY_PX = 68;
+const WAVEFORM_SLOT_PX = { width: 52, compactHeight: 24, restingHeight: 32 };
+const DIVIDER_PX = { compactHeight: 16, restingHeight: 20 };
 
 // Mirrored by .liquid-cancel-skin[data-pill-state] in dictation-panel.css,
 // which redraws this chrome while the cancel skin owns the fused surface —
@@ -73,6 +88,7 @@ const STATE_APPEARANCE: Record<VoicePillState, string> = {
   processing: "border-border/60 bg-surface-1 text-foreground/70",
   thinking: "border-border/60 bg-surface-1 text-foreground",
   submitting: "border-border-hover bg-surface-2 text-foreground",
+  sent: "border-border-hover bg-surface-2 text-foreground",
   unavailable: "border-border/60 bg-surface-1 text-muted-foreground",
 };
 
@@ -84,11 +100,15 @@ const STATE_APPEARANCE: Record<VoicePillState, string> = {
 // Muted and listening-but-silent share a brightness on purpose: both mean
 // "nothing is being said". They are told apart by motion instead — muted
 // freezes the bars, idle keeps them drifting.
+// Raised with the pill: at 0.45 the resting character was washed out rather
+// than restful, and a bigger silhouette only made the faintness more obvious.
+// The gap up to the lifted states still carries "it heard something" — it just
+// starts from somewhere you can actually read.
 const AMBIENT_STATE_OPACITY: Partial<Record<VoicePillState, number>> = {
-  idle: 0.45,
-  muted: 0.45,
-  hearing: 0.85,
-  missed: 0.85,
+  idle: 0.62,
+  muted: 0.62,
+  hearing: 0.92,
+  missed: 0.92,
 };
 
 // The cat has no hover or agent pose: hover is a pointer cue the chrome already
@@ -103,6 +123,7 @@ const CAT_STATE: Record<VoicePillState, CatIdentityState> = {
   processing: "processing",
   thinking: "processing",
   submitting: "submitting",
+  sent: "sent",
   unavailable: "muted",
 };
 
@@ -129,6 +150,9 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
     horizontalDirection = "right",
     ambientActive = false,
     identityStyle = "cat",
+    idleMotion = true,
+    scale = VOICE_PILL_SCALE.default,
+    resizing = false,
     submitDeadline = null,
     submitDelayMs = 0,
     className,
@@ -184,21 +208,31 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
   const showCompactPill =
     !collapseToIdentity && (waveformLive || expanded || (isPanel && !waveformOnlyWhileRecording));
   const showDivider = showCompactPill && waveformVisible && !waveformLive;
+  const footprints = scaleVoicePillFootprint(scale);
+  const px = (value: number) => Math.round(value * scale);
   // The hidden divider's margins are what carry the compact pill's 6px
   // icon↔waveform gap; a visible divider keeps 4px flanking its 1px rule.
-  const dividerMargin = showCompactPill ? (showDivider ? 4 : COMPACT_CONTENT_GAP_PX / 2) : 0;
-  // Paired with VOICE_PILL_FOOTPRINT's 6px icon inset; changing one without the
-  // other moves the waveform off the documented edge insets.
-  const identitySize = 36;
+  const dividerMargin = showCompactPill ? px(showDivider ? 4 : COMPACT_CONTENT_GAP_PX / 2) : 0;
+  const identitySize = px(IDENTITY_PX);
+  // Bar geometry (widths, gaps, the calibrated height curve) is shared with the
+  // live waveform's math, so the lane is scaled as a whole rather than
+  // re-derived per bar. Both are CSS boxes, so the transform stays crisp.
+  const waveLaneScale =
+    scale === 1 ? undefined : { transform: `scale(${scale})`, transformOrigin: "center" };
   const floatingHover = !isPanel && state === "hover";
-  const footprint = showCompactPill ? VOICE_PILL_FOOTPRINT.recording : VOICE_PILL_FOOTPRINT.idle;
+  const footprint = showCompactPill ? footprints.recording : footprints.idle;
+  // The resting pill is the character alone on the desktop. The capsule chrome
+  // only appears when it frames something: the listening/recording waveform,
+  // or the work states whose Signal glow and countdown ring are drawn on that
+  // boundary. The Agent pill keeps its own chrome throughout.
+  const framesWork = isProcessing || isThinking || state === "submitting" || state === "sent";
+  const chromeless = !agentMode && !showCompactPill && !framesWork;
 
   const pill = (
     <div
       ref={ref}
       className={cn(
         "voice-pill-control relative flex items-center justify-center overflow-hidden rounded-full border",
-        showCompactPill && "pr-1.5",
         "shadow-[var(--shadow-card)]",
         STATE_APPEARANCE[state],
         className
@@ -209,18 +243,28 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
         // and forced an unnecessary large window resize.
         width: footprint.width,
         height: footprint.height,
+        paddingRight: showCompactPill ? px(COMPACT_EDGE_PAD_PX) : 0,
         cursor: isProcessing || isThinking ? "not-allowed" : isDragging ? "grabbing" : "pointer",
         // Yields to the fused rule's `box-shadow: none` while the liquid skin
         // owns the chrome — an inline shadow would outrank it and paint a
         // phantom capsule when a de-fusing skin lingers over a hovered pill.
-        boxShadow: floatingHover && !liquidFused ? "var(--shadow-card-hover-subtle)" : undefined,
+        boxShadow:
+          floatingHover && !liquidFused && !chromeless
+            ? "var(--shadow-card-hover-subtle)"
+            : undefined,
         opacity: resolvePillOpacity(state, ambientActive),
-        transition: `width ${VOICE_PILL_GROW_TRANSITION}, height ${VOICE_PILL_GROW_TRANSITION}, padding-left ${VOICE_PILL_GROW_TRANSITION}, padding-right ${VOICE_PILL_GROW_TRANSITION}, background-color 220ms ease-out, border-color 220ms ease-out, box-shadow 220ms ease-out, opacity 220ms ease-out`,
+        // Under a live grip drag the box must land where the pointer is; a
+        // 300ms tween on width/height would trail it by a third of a second.
+        transition: resizing
+          ? "background-color 220ms ease-out, border-color 220ms ease-out, box-shadow 220ms ease-out, opacity 220ms ease-out"
+          : `width ${VOICE_PILL_GROW_TRANSITION}, height ${VOICE_PILL_GROW_TRANSITION}, padding-left ${VOICE_PILL_GROW_TRANSITION}, padding-right ${VOICE_PILL_GROW_TRANSITION}, background-color 220ms ease-out, border-color 220ms ease-out, box-shadow 220ms ease-out, opacity 220ms ease-out`,
         ...style,
       }}
       data-horizontal-direction={horizontalDirection}
       data-integrated-with-panel={integratedWithPanel || undefined}
       data-liquid-fused={liquidFused || undefined}
+      data-chromeless={chromeless || undefined}
+      data-wave-frozen={state === "muted" || isUnavailable || !idleMotion || undefined}
       data-agent-mode={agentMode || undefined}
       data-agent-beam-active={(agentMode && isThinking) || undefined}
       data-expand-chevron={showExpandChevron || undefined}
@@ -228,12 +272,18 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
     >
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-foreground/10 to-transparent transition-opacity duration-200 ease-out"
-        style={{ opacity: state === "hover" ? 0.72 : 0 }}
+        // Without chrome this wash is the only thing a hover would draw, and a
+        // tinted disc behind the character is the circle we just removed.
+        style={{ opacity: state === "hover" && !chromeless ? 0.72 : 0 }}
       />
 
       <span
         className="voice-pill-identity-slot relative inline-block shrink-0 transition-[width,height] duration-200"
-        style={{ width: identitySize, height: identitySize }}
+        style={{
+          width: identitySize,
+          height: identitySize,
+          transitionProperty: resizing ? "none" : undefined,
+        }}
         aria-hidden="true"
       >
         <span
@@ -259,11 +309,12 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
                 <Identity
                   state={CAT_STATE[state]}
                   getLevel={getAudioLevel}
+                  idleMotion={idleMotion}
                   size={identitySize}
                   // No pulse on processing: both identities animate that state
                   // themselves.
                   className={cn(
-                    "transition-[width,height] duration-200",
+                    !resizing && "transition-[width,height] duration-200",
                     state === "idle" && "text-foreground",
                     isUnavailable && "animate-pulse"
                   )}
@@ -284,8 +335,8 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
       <div
         className="shrink-0 overflow-hidden bg-border/60"
         style={{
-          height: showCompactPill ? 16 : 20,
-          width: showDivider ? 1 : 0,
+          height: px(showCompactPill ? DIVIDER_PX.compactHeight : DIVIDER_PX.restingHeight),
+          width: showDivider ? Math.max(1, Math.round(scale)) : 0,
           marginLeft: dividerMargin,
           marginRight: dividerMargin,
           opacity: showDivider ? 1 : 0,
@@ -296,8 +347,10 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
       <div
         className="voice-pill-waveform relative shrink-0 overflow-hidden text-foreground"
         style={{
-          width: showCompactPill ? 52 : 0,
-          height: showCompactPill ? 24 : 32,
+          width: showCompactPill ? px(WAVEFORM_SLOT_PX.width) : 0,
+          height: px(
+            showCompactPill ? WAVEFORM_SLOT_PX.compactHeight : WAVEFORM_SLOT_PX.restingHeight
+          ),
           transition: `width ${VOICE_PILL_GROW_TRANSITION}, height ${VOICE_PILL_GROW_TRANSITION}`,
         }}
       >
@@ -305,25 +358,30 @@ export const VoicePill = forwardRef<HTMLDivElement, VoicePillProps>(function Voi
           className="absolute inset-0 flex items-center justify-center gap-0.75 transition-opacity duration-200 ease-out"
           style={{
             opacity: showCompactPill && waveformVisible && !waveformLive ? 1 : 0,
+            ...waveLaneScale,
           }}
           aria-hidden="true"
         >
           {RESTING_WAVE_HEIGHTS.map((height, index) => (
             <span
               key={`${height}-${index}`}
-              className="w-0.5 rounded-full bg-current"
-              style={{ height }}
+              className="voice-pill-resting-bar w-0.5 origin-center rounded-full bg-current"
+              // Staggered by index so the drift travels along the lane instead
+              // of every bar breathing in unison, which reads as a pulse.
+              style={{ height, animationDelay: `${index * 0.14}s` }}
             />
           ))}
         </div>
-        <PillWaveform
-          getLevel={getAudioLevel}
-          active={waveformLive}
-          className={cn(
-            "absolute inset-0 transition-opacity duration-200 ease-out",
-            showCompactPill && waveformVisible && waveformLive ? "opacity-100" : "opacity-0"
-          )}
-        />
+        <div className="absolute inset-0" style={waveLaneScale}>
+          <PillWaveform
+            getLevel={getAudioLevel}
+            active={waveformLive}
+            className={cn(
+              "absolute inset-0 transition-opacity duration-200 ease-out",
+              showCompactPill && waveformVisible && waveformLive ? "opacity-100" : "opacity-0"
+            )}
+          />
+        </div>
       </div>
 
       {isUnavailable && (

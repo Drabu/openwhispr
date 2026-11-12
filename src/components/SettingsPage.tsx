@@ -88,6 +88,7 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { validateHotkeyForSlot } from "../utils/hotkeyValidation";
 import { isHoldCapableHotkey } from "../helpers/holdCapableHotkey";
 import { PRESS_ENTER_DELAY_CHOICES_MS } from "../helpers/submitGrace";
+import { VOICE_PILL_SCALE_PRESETS } from "../helpers/voicePillPresentation";
 
 // Spoken-pause lengths people actually use; the store clamps anything else.
 const AUTO_STOP_DELAY_CHOICES_MS = [2000, 3000, 5000, 8000, 12000] as const;
@@ -1268,6 +1269,10 @@ export default function SettingsPage({
     setAmbientNoiseProfile,
     voiceIdentityStyle,
     setVoiceIdentityStyle,
+    pillIdleMotion,
+    setPillIdleMotion,
+    pillScale,
+    setPillScale,
     autoStopSilenceMs,
     setAutoStopSilenceMs,
     startMinimized,
@@ -3316,6 +3321,70 @@ export default function SettingsPage({
               </SettingsPanel>
             </div>
 
+            {/* Pill appearance */}
+            <div>
+              <SectionHeader title={t("settingsPage.general.identity.title")} />
+              <SettingsPanel>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.identity.idleMotion")}
+                    description={t("settingsPage.general.identity.idleMotionDescription")}
+                  >
+                    <Toggle checked={pillIdleMotion} onChange={setPillIdleMotion} />
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.identity.size")}
+                    description={t("settingsPage.general.identity.sizeDescription")}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {/* Shown only when the corner grip left the size between
+                          presets, so none of the buttons reads as current. */}
+                      {!VOICE_PILL_SCALE_PRESETS.includes(pillScale) && (
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {Math.round(pillScale * 100)}%
+                        </span>
+                      )}
+                      {VOICE_PILL_SCALE_PRESETS.map((preset) => (
+                        <Button
+                          key={preset}
+                          variant={pillScale === preset ? "secondary" : "outline-flat"}
+                          className="h-7 px-2.5 text-xs tabular-nums"
+                          onClick={() => setPillScale(preset)}
+                        >
+                          {Math.round(preset * 100)}%
+                        </Button>
+                      ))}
+                    </div>
+                  </SettingsRow>
+                </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <SettingsRow
+                    label={t("settingsPage.general.identity.style")}
+                    description={t("settingsPage.general.identity.styleDescription")}
+                  >
+                    <Select
+                      value={voiceIdentityStyle}
+                      onValueChange={(value) => setVoiceIdentityStyle(value as "cat" | "lottie")}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cat">
+                          {t("settingsPage.general.identity.styleCat")}
+                        </SelectItem>
+                        <SelectItem value="lottie">
+                          {t("settingsPage.general.identity.styleLottie")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingsRow>
+                </SettingsPanelRow>
+              </SettingsPanel>
+            </div>
+
             {/* Finish a dictation on silence */}
             <div>
               <SectionHeader title={t("settingsPage.general.autoStop.title")} />
@@ -3338,29 +3407,6 @@ export default function SettingsPage({
                         </SelectItem>
                         <SelectItem value="hotkey">
                           {t("settingsPage.general.autoStop.startHotkey")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </SettingsRow>
-                </SettingsPanelRow>
-                <SettingsPanelRow>
-                  <SettingsRow
-                    label={t("settingsPage.general.identity.style")}
-                    description={t("settingsPage.general.identity.styleDescription")}
-                  >
-                    <Select
-                      value={voiceIdentityStyle}
-                      onValueChange={(value) => setVoiceIdentityStyle(value as "cat" | "lottie")}
-                    >
-                      <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cat">
-                          {t("settingsPage.general.identity.styleCat")}
-                        </SelectItem>
-                        <SelectItem value="lottie">
-                          {t("settingsPage.general.identity.styleLottie")}
                         </SelectItem>
                       </SelectContent>
                     </Select>

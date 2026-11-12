@@ -2286,10 +2286,15 @@
         "description": "Dite em qualquer idioma: o texto colado sai traduzido"
       },
       "identity": {
+        "title": "Pílula",
         "style": "Personagem da pílula",
         "styleDescription": "Qual ilustração mostra os estados de voz na pílula flutuante.",
         "styleCat": "Gato (desenhado)",
-        "styleLottie": "Arquivo de animação"
+        "styleLottie": "Arquivo de animação",
+        "idleMotion": "Continuar em movimento em repouso",
+        "idleMotionDescription": "Caso contrário o personagem para depois de um tempo. O movimento gasta um pouco de bateria numa pílula sempre visível.",
+        "size": "Tamanho da pílula",
+        "sizeDescription": "Arraste o canto da pílula para ajustá-la à mão ou escolha um tamanho aqui. Clique duas vezes no canto para voltar a 100%."
       }
     },
     "permissions": {
@@ -4638,7 +4643,8 @@
     },
     "buttons": {
       "cancelRecording": "Cancelar gravação",
-      "cancelProcessing": "Cancelar processamento"
+      "cancelProcessing": "Cancelar processamento",
+      "resizePill": "Arraste para redimensionar a pílula"
     },
     "commandMenu": {
       "stopListening": "Parar de ouvir",

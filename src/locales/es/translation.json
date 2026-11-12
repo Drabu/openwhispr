@@ -2359,10 +2359,15 @@
         "description": "Dicta en cualquier idioma: el texto pegado sale traducido"
       },
       "identity": {
+        "title": "Píldora",
         "style": "Personaje de la píldora",
         "styleDescription": "Qué ilustración muestra los estados de voz en la píldora flotante.",
         "styleCat": "Gato (dibujado)",
-        "styleLottie": "Archivo de animación"
+        "styleLottie": "Archivo de animación",
+        "idleMotion": "Seguir en movimiento en reposo",
+        "idleMotionDescription": "Si no, el personaje se queda quieto al cabo de un rato. El movimiento gasta algo de batería en una píldora visible todo el día.",
+        "size": "Tamaño de la píldora",
+        "sizeDescription": "Arrastra la esquina de la píldora para ajustarla a mano, o elige un tamaño aquí. Haz doble clic en la esquina para volver al 100 %."
       }
     },
     "permissions": {
@@ -4683,7 +4688,8 @@
     },
     "buttons": {
       "cancelRecording": "Cancelar grabación",
-      "cancelProcessing": "Cancelar procesamiento"
+      "cancelProcessing": "Cancelar procesamiento",
+      "resizePill": "Arrastra para cambiar el tamaño de la píldora"
     },
     "commandMenu": {
       "stopListening": "Dejar de escuchar",

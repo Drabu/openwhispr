@@ -2307,10 +2307,15 @@
         "description": "用任何語言聽寫——貼上的文字會自動翻譯"
       },
       "identity": {
+        "title": "膠囊",
         "style": "膠囊角色",
         "styleDescription": "由哪種圖形在浮動膠囊上顯示語音狀態。",
         "styleCat": "貓（手繪）",
-        "styleLottie": "動畫檔案"
+        "styleLottie": "動畫檔案",
+        "idleMotion": "閒置時保持動畫",
+        "idleMotionDescription": "否則角色會在一段時間後靜止。常駐螢幕的膠囊上，動畫會消耗一點電量。",
+        "size": "膠囊大小",
+        "sizeDescription": "拖曳膠囊的邊角可手動調整大小，也可在此選擇一個尺寸。雙擊邊角可回復為 100%。"
       }
     },
     "permissions": {
@@ -4610,7 +4615,8 @@
     },
     "buttons": {
       "cancelRecording": "取消錄音",
-      "cancelProcessing": "取消處理"
+      "cancelProcessing": "取消處理",
+      "resizePill": "拖曳以調整膠囊大小"
     },
     "commandMenu": {
       "stopListening": "停止錄音",

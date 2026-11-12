@@ -4,12 +4,14 @@ import { resolveWaveformBarHeight, WAVEFORM_BAR_MAX_PX, WAVEFORM_BAR_MIN_PX } fr
 import "./CatIdentity.css";
 
 export type CatIdentityState =
-  "idle" | "hearing" | "recording" | "processing" | "muted" | "missed" | "submitting";
+  "idle" | "hearing" | "recording" | "processing" | "muted" | "missed" | "submitting" | "sent";
 
 interface CatIdentityProps {
   state: CatIdentityState;
   /** Returns the current input level (0..~1) or null when no signal source exists. */
   getLevel: () => number | null;
+  /** Keep the idle loops running instead of settling after REST_AFTER_MS. */
+  idleMotion?: boolean;
   size?: number;
   className?: string;
 }
@@ -56,18 +58,24 @@ const REST_AFTER_MS = 45000;
  * keyframes except the recording ear twitch, which tracks the live mic level
  * through a single custom property written from a rAF loop.
  */
-export function CatIdentity({ state, getLevel, size = 22, className }: CatIdentityProps) {
+export function CatIdentity({
+  state,
+  getLevel,
+  idleMotion = false,
+  size = 22,
+  className,
+}: CatIdentityProps) {
   const rootRef = useRef<HTMLSpanElement>(null);
   const [resting, setResting] = useState(false);
 
   useEffect(() => {
-    if (state !== "idle") {
+    if (state !== "idle" || idleMotion) {
       setResting(false);
       return undefined;
     }
     const timer = setTimeout(() => setResting(true), REST_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [state]);
+  }, [state, idleMotion]);
 
   useEffect(() => {
     const root = rootRef.current;
